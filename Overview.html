@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capsules.run Operators Overview</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #0a0a0a; color: #f5f5f0; }
+      main { max-width: 920px; margin: 0 auto; padding: 56px 24px; }
+      h1, h2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -0.02em; }
+      p, li { color: #c8c8c1; line-height: 1.65; }
+      code { background: #1a1a1a; color: #7ba7c9; padding: 2px 5px; }
+      section { border-top: 1px solid rgba(245,245,240,.16); padding: 28px 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Capsules.run Operators</h1>
+      <p>An offline local-first investigative workspace for Gemma4Good/Kaggle, with optional local Gemma reasoning through Ollama and portable Capsule handoff.</p>
+      <section>
+        <h2>Run</h2>
+        <p><code>./run-local.sh</code> from the <code>operators</code> folder. The app opens at <code>http://127.0.0.1:5174</code> and expects Node <code>&gt;=20</code>.</p>
+      </section>
+      <section>
+        <h2>Local Runtime</h2>
+        <p>Live Gemma answers use Ollama at <code>http://127.0.0.1:11434/api/chat</code> with <code>gemma4:latest</code>. If Ollama is disabled or unreachable, deterministic offline analysis keeps the app self-contained with no cloud dependency.</p>
+      </section>
+      <section>
+        <h2>Primary Surfaces</h2>
+        <ul>
+          <li>Top HUD for runtime identity, inference target, session state, and operator provenance.</li>
+          <li>Blank spatial workspace for local evidence, generated surfaces, chronology, topology, and document inspection.</li>
+          <li>Gemma resident assistant for contextual Q&amp;A, tasks, and communication plans.</li>
+          <li>Tiny bottom analysis queue for active local model work.</li>
+          <li>Ledger Events surface for append-only context continuity and selected evidence capture.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Interactive Features</h2>
+        <ul>
+          <li>Workspace tabs, workflow modes, canvas modules, document search, local uploads, and attachment selection.</li>
+          <li>Highlight text anywhere in the workspace and add it to Context Continuity.</li>
+          <li>Ask Gemma questions, cancel inference, toggle the optional local runtime, and export the local Capsule handoff.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Status</h2>
+        <p>The documentation set reflects the current runnable local app, including one-line startup, Ollama/Gemma expectations, offline constraints, event ledger naming, and known local limits.</p>
+      </section>
+      <section>
+        <h2>Known Limits</h2>
+        <p>The export is a hashed local JSON artifact with <code>capsule_version: "0.6-local-ui"</code>, not byte-compatible Capsule v0.6. Signing, evidence parsing, and chain-of-custody behavior remain integration gates.</p>
+      </section>
+    </main>
+  </body>
+</html>

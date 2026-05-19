@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+target/
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+.DS_Store
+.claude/
+.vite/
+*.log
+*.local
+coverage/
+playwright-report/
+test-results/
