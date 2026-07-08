@@ -48,6 +48,23 @@ const checks = [
     rail.includes("gate-severity") && rail.includes("task.evidence"),
   ],
   ["Left rail event log shows recent events", rail.includes("ledger.slice(-6)")],
+  [
+    "Events tab renders a dedicated searchable ledger surface",
+    canvas.includes("EventLogWorkspace") && canvas.includes("event-log-search") && canvas.includes("event-log-row"),
+  ],
+  [
+    "Heatmap plots real actor-by-action ledger counts, not synthetic values",
+    canvas.includes("topByCount") &&
+      canvas.includes("event.actor === actor && event.action === action") &&
+      !canvas.includes("(rowIndex + 1) * 9"),
+  ],
+  [
+    "Completing a decision gate requires a recorded reason",
+    rail.includes("gate-note-form") &&
+      rail.includes("disabled={!decisionNote.trim()}") &&
+      store.includes("resolution") &&
+      store.includes("resolvedAt: nowDone ? new Date().toISOString() : undefined"),
+  ],
 ];
 
 const failures = checks.filter(([, passed]) => !passed).map(([label]) => label);

@@ -189,7 +189,7 @@ type WorkspaceState = {
   exportOperatorPublicKeys: () => Promise<void>;
   exportOperatorPrivateKeys: () => Promise<void>;
   importOperatorKeyBundle: (file: File) => Promise<void>;
-  toggleTask: (id: string) => void;
+  toggleTask: (id: string, note?: string) => void;
   queueDecisionGateForGemma: (id: string) => void;
   addContextSnippet: (snippet: string, source: string) => void;
   askGemma: (question: string) => Promise<void>;
@@ -773,17 +773,30 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       });
     }
   },
-  toggleTask: (id) =>
+  toggleTask: (id, note) =>
     set((state) => {
       const target = state.tasks.find((task) => task.id === id);
       if (!target) return state;
       const nowDone = !target.done;
+      const resolution = nowDone ? note?.trim() || undefined : target.resolution;
+      const eventTarget = nowDone && resolution
+        ? `${taskLedgerLabel(target.text)} :: ${resolution.slice(0, 140)}`
+        : taskLedgerLabel(target.text);
       return {
-        tasks: state.tasks.map((task) => (task.id === id ? { ...task, done: nowDone } : task)),
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                done: nowDone,
+                resolution,
+                resolvedAt: nowDone ? new Date().toISOString() : undefined,
+              }
+            : task,
+        ),
         ledger: appendEvent(
           state.ledger,
           nowDone ? "decision_gate_completed" : "decision_gate_reopened",
-          taskLedgerLabel(target.text),
+          eventTarget,
           state.operatorIdentity.operatorId,
         ),
         lastSaved: "now",
@@ -1906,7 +1919,7 @@ function moduleSpec(kind: CanvasModuleKind): Pick<CanvasModule, "title" | "subti
     "attack-flow": { title: "Workflow Helix", subtitle: "Operator-defined action and evidence chain", accent: "blue" },
     "host-impact": { title: "Host Impact Overview", subtitle: "Affected systems by impact level", accent: "sage" },
     timeline: { title: "Timeline", subtitle: "Chronological view of major events", accent: "amber" },
-    heatmap: { title: "Evidence Heatmap", subtitle: "Activity intensity by host", accent: "rose" },
+    heatmap: { title: "Evidence Heatmap", subtitle: "Ledger event activity by actor and action", accent: "rose" },
     "command-table": { title: "Evidence Table", subtitle: "Structured rows extracted from local artifacts", accent: "blue" },
     "ioc-table": { title: "Indicator Board", subtitle: "Extracted indicators grouped by source", accent: "amber" },
     markdown: { title: "Markdown Note", subtitle: "Editable operator note surface", accent: "blue" },

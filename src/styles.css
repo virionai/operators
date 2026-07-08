@@ -843,6 +843,52 @@ p {
   text-decoration: line-through;
 }
 
+.task-resolution {
+  display: block;
+  margin-top: 2px;
+  color: #9ec49a;
+  font-size: 9px;
+  text-decoration: none;
+}
+
+.gate-note-form {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.gate-note-form input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(158, 196, 154, 0.35);
+  border-radius: 4px;
+  outline: 0;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.3);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.gate-note-form button {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(123, 167, 201, 0.24);
+  border-radius: 4px;
+  color: #d7e2e4;
+  background: rgba(8, 18, 27, 0.86);
+  font-family: var(--mono);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.gate-note-form button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .task-meta-line {
   display: flex;
   flex-wrap: wrap;
@@ -1306,9 +1352,14 @@ p {
 }
 
 .heatmap-row i {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 18px;
   border: 1px solid rgba(0, 0, 0, 0.3);
+  color: #f3f7f7;
+  font-size: 9px;
+  font-style: normal;
 }
 
 .heatmap-scale {
@@ -4151,6 +4202,130 @@ p {
 .mermaid-preview {
   display: grid;
   min-height: 0;
+}
+
+.event-log-workspace {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-height: 100%;
+  padding: 16px;
+  border: 1px solid rgba(123, 167, 201, 0.24);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgba(123, 167, 201, 0.08), rgba(8, 18, 27, 0.42)),
+    rgba(4, 10, 14, 0.72);
+}
+
+.event-log-workspace > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.event-log-workspace > header h3 {
+  margin: 0;
+  color: #f3f7f7;
+  font-family: var(--mono);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.event-log-workspace > header p {
+  margin: 2px 0 0;
+  color: #9aa8ac;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.event-log-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid rgba(245, 245, 240, 0.1);
+  border-radius: 4px;
+  color: #9aa8ac;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.event-log-search input {
+  width: 220px;
+  height: 28px;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.event-log-table {
+  overflow-y: auto;
+  min-height: 0;
+  border: 1px solid rgba(245, 245, 240, 0.07);
+  border-radius: 5px;
+}
+
+.event-log-row {
+  display: grid;
+  grid-template-columns: 64px 168px 1.2fr 0.7fr 1.3fr;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(245, 245, 240, 0.06);
+  color: #c8d2d4;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-log-row.header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #8fa1a6;
+  background: rgba(7, 14, 18, 0.98);
+  cursor: default;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+
+.event-log-row:not(.header):hover {
+  background: rgba(123, 167, 201, 0.08);
+}
+
+.event-log-row strong {
+  color: #e7f0f1;
+  font-weight: 600;
+}
+
+.event-log-row em {
+  overflow: hidden;
+  color: #9db4bd;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-log-iso {
+  color: #8fa1a6;
+}
+
+.event-log-empty {
+  margin: 0;
+  padding: 14px;
+  color: #8fa1a6;
+  font-family: var(--mono);
+  font-size: 10px;
 }
 
 .mermaid-diagram {

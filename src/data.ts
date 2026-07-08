@@ -52,6 +52,8 @@ export type OperatorTask = {
   severity: Severity;
   done: boolean;
   evidence: string;
+  resolution?: string;
+  resolvedAt?: string;
 };
 
 export type LedgerEvent = {

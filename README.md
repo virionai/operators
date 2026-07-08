@@ -44,6 +44,9 @@ Configure includes one-click presets for Ollama (`:11434`), LM Studio (`:1234/v1
 - Model responses can populate Decision Gates through a `decision_gates` JSON schema; parsed gates render in the left rail with a severity chip, linked evidence, and `(meta: gemma4)` attribution. Completing or reopening a gate appends an operator-attributed ledger event (`decision_gate_completed` / `decision_gate_reopened`).
 - Mermaid output renders as real diagrams on graph/mermaid canvas modules and inside markdown notes (strict security level, lazy-loaded renderer, source-view fallback on invalid syntax).
 - Every ledger event records a machine-readable ISO-8601 timestamp alongside the display time, and sealed capsule chains preserve the real per-event times for audit review.
+- Completing a decision gate requires a recorded reason; the note is stored on the gate (`resolution`, `resolvedAt`) and appended to the ledger event so the decision rationale travels with the capsule.
+- The Events tab is a dedicated searchable ledger surface: full append-only event table with display time, recorded UTC timestamp, action, actor, and target, filterable and queueable as model context.
+- The Evidence Heatmap module plots real actor-by-action event counts from the ledger instead of synthetic intensity values.
 - Task toggles, tiny expandable active analysis footer, and runtime context utilization line.
 - A seal/export flow that assembles a local `.capsule.json` workspace continuity artifact and hashes it locally.
 

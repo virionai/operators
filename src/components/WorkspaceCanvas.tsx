@@ -10,6 +10,7 @@ const workspaceItems: Array<{ label: string; kind?: CanvasModuleKind; upload?: b
   { label: "Markdown Note", kind: "markdown" },
   { label: "Mermaid Diagram", kind: "mermaid" },
   { label: "Timeline", kind: "timeline" },
+  { label: "Evidence Heatmap", kind: "heatmap" },
   { label: "Graph", kind: "graph" },
   { label: "Table", kind: "table" },
   { label: "IOC Board", kind: "ioc-board" },
@@ -59,7 +60,12 @@ export function WorkspaceCanvas() {
   const [expanded, setExpanded] = useState(false);
 
   const selectedAttachment = attachments.find((item) => item.id === selectedAttachmentId) ?? attachments[0];
-  const visibleModules = activeTab === "Knowledge" ? modules.filter(isKnowledgeModule) : activeTab === "Assets" ? [] : modules;
+  const visibleModules =
+    activeTab === "Knowledge"
+      ? modules.filter(isKnowledgeModule)
+      : activeTab === "Assets" || activeTab === "Events"
+        ? []
+        : modules;
 
   return (
     <main
@@ -135,6 +141,13 @@ export function WorkspaceCanvas() {
       <section className="canvas-grid canvas-spatial-layer" style={{ "--canvas-zoom": zoom } as React.CSSProperties}>
         {activeTab === "Knowledge" ? (
           <KnowledgeGraphWorkspace facts={knowledgeFacts} onCreateGraph={() => void requestCanvasModule("graph")} />
+        ) : null}
+        {activeTab === "Events" ? (
+          <EventLogWorkspace
+            onQueueEvent={(event) =>
+              addContextSnippet(`${event.at || event.time} ${event.action} ${event.actor} target:${event.target}`, "event-log")
+            }
+          />
         ) : null}
         {activeTab === "Assets" ? (
           <AssetBrowserWorkspace
@@ -280,6 +293,67 @@ function KnowledgeGraphWorkspace({
         ) : (
           <span>Knowledge facts will appear here after Gemma returns the graph schema.</span>
         )}
+      </div>
+    </section>
+  );
+}
+
+function EventLogWorkspace({ onQueueEvent }: { onQueueEvent: (event: LedgerEvent) => void }) {
+  const ledger = useWorkspaceStore((state) => state.ledger);
+  const [query, setQuery] = useState("");
+  const normalized = query.trim().toLowerCase();
+  const events = [...ledger].reverse();
+  const visible = normalized
+    ? events.filter((event) =>
+        `${event.action.replace(/_/g, " ")} ${event.action} ${event.actor} ${event.target}`.toLowerCase().includes(normalized),
+      )
+    : events;
+  const actorCount = new Set(ledger.map((event) => event.actor)).size;
+
+  return (
+    <section className="event-log-workspace" aria-label="Events workspace ledger">
+      <header>
+        <div>
+          <h3>Event Ledger</h3>
+          <p>
+            {ledger.length} append-only event{ledger.length === 1 ? "" : "s"} · {actorCount} actor{actorCount === 1 ? "" : "s"} · sealed into the capsule chain on export
+          </p>
+        </div>
+        <label className="event-log-search">
+          <Search size={13} />
+          <input
+            type="search"
+            placeholder="Filter by action, actor, or target..."
+            value={query}
+            onChange={(event) => setQuery(event.currentTarget.value)}
+          />
+        </label>
+      </header>
+      <div className="event-log-table" role="table">
+        <div className="event-log-row header" role="row">
+          <span>Time</span><span>Recorded (UTC)</span><span>Action</span><span>Actor</span><span>Target</span>
+        </div>
+        {visible.map((event) => (
+          <button
+            className="event-log-row"
+            type="button"
+            role="row"
+            key={event.id}
+            title="Queue this event as context"
+            onClick={() => onQueueEvent(event)}
+          >
+            <span>{event.time}</span>
+            <span className="event-log-iso">{event.at ? event.at.replace("T", " ").replace(/\.\d+Z$/, "Z") : "—"}</span>
+            <strong>{event.action.replace(/_/g, " ")}</strong>
+            <span>{event.actor}</span>
+            <em>{event.target}</em>
+          </button>
+        ))}
+        {visible.length === 0 ? (
+          <p className="event-log-empty">
+            {ledger.length === 0 ? "No events yet. Workspace actions append to the ledger automatically." : "No events match the filter."}
+          </p>
+        ) : null}
       </div>
     </section>
   );
@@ -639,36 +713,55 @@ function Timeline() {
 
 function Heatmap() {
   const ledger = useWorkspaceStore((state) => state.ledger);
-  const attachments = useWorkspaceStore((state) => state.attachments);
-  if (ledger.length === 0 && attachments.length === 0) return <EmptyModule text="No activity matrix has been generated yet." />;
-  const rows = (attachments.length ? attachments.map((item) => item.name) : ["ledger"]).slice(0, 5);
-  const cols = ledger.slice(-5).map((event) => event.action.replace(/_/g, " ").slice(0, 9));
-  const safeCols = cols.length ? cols : ["staged"];
+  if (ledger.length === 0) return <EmptyModule text="No activity matrix yet. Ledger events populate this heatmap as the workspace is used." />;
+
+  const actors = topByCount(ledger.map((event) => event.actor), 4);
+  const actions = topByCount(ledger.map((event) => event.action), 5);
+  const counts = actors.map((actor) =>
+    actions.map((action) => ledger.filter((event) => event.actor === actor && event.action === action).length),
+  );
+  const max = Math.max(1, ...counts.flat());
+  const columns = { gridTemplateColumns: `72px repeat(${actions.length}, 1fr)` };
+
   return (
     <div className="heatmap">
-      <div className="heatmap-row header">
-        <span>Host</span>
-        {safeCols.map((col, index) => <span key={`${col}-${index}`}>{col}</span>)}
+      <div className="heatmap-row header" style={columns}>
+        <span>Actor</span>
+        {actions.map((action) => <span key={action}>{action.replace(/_/g, " ").slice(0, 12)}</span>)}
       </div>
-      {rows.map((row, rowIndex) => (
-        <div className="heatmap-row" key={`${row}-${rowIndex}`}>
-          <span>{row}</span>
-          {safeCols.map((_, colIndex) => {
-            const value = Math.min(92, 20 + (rowIndex + 1) * 9 + (colIndex + 1) * 11);
+      {actors.map((actor, rowIndex) => (
+        <div className="heatmap-row" style={columns} key={actor}>
+          <span>{actor}</span>
+          {actions.map((action, colIndex) => {
+            const count = counts[rowIndex][colIndex];
             return (
-            <i
-              key={`${row}-${rowIndex}-${colIndex}`}
-              style={{
-                background: `linear-gradient(135deg, rgba(88,46,160,.72), rgba(201,168,123,${value / 100}))`,
-              }}
-            />
+              <i
+                key={`${actor}-${action}`}
+                title={`${actor} · ${action.replace(/_/g, " ")} · ${count} event${count === 1 ? "" : "s"}`}
+                style={{
+                  background: count
+                    ? `linear-gradient(135deg, rgba(88,46,160,${0.25 + (count / max) * 0.5}), rgba(201,168,123,${0.15 + (count / max) * 0.75}))`
+                    : "rgba(245, 245, 240, 0.03)",
+                }}
+              >
+                {count || ""}
+              </i>
             );
           })}
         </div>
       ))}
-      <div className="heatmap-scale"><span>Low</span><b /><b /><b /><b /><span>High</span></div>
+      <div className="heatmap-scale"><span>Low</span><b /><b /><b /><b /><span>High · {max} events</span></div>
     </div>
   );
+}
+
+function topByCount(values: string[], limit: number) {
+  const counts = new Map<string, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([value]) => value);
 }
 
 function CommandTable() {

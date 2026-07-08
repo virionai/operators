@@ -23,6 +23,8 @@ export function LeftRail() {
   const selectAttachment = useWorkspaceStore((state) => state.selectAttachment);
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const [expandedAsset, setExpandedAsset] = useState("");
+  const [completingGateId, setCompletingGateId] = useState("");
+  const [decisionNote, setDecisionNote] = useState("");
   const payloadSummary = [
     { label: "Files", value: attachments.length },
     { label: "Surfaces", value: canvasModules.length },
@@ -111,7 +113,19 @@ export function LeftRail() {
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <div className={`task-row ${task.done ? "task-done" : ""}`} key={task.id}>
-              <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} aria-label={`Complete ${task.text}`} />
+              <input
+                type="checkbox"
+                checked={task.done}
+                onChange={() => {
+                  if (task.done) {
+                    toggleTask(task.id);
+                    return;
+                  }
+                  setDecisionNote("");
+                  setCompletingGateId(completingGateId === task.id ? "" : task.id);
+                }}
+                aria-label={task.done ? `Reopen ${task.text}` : `Complete ${task.text}`}
+              />
               <button
                 type="button"
                 className="task-context-button"
@@ -124,10 +138,37 @@ export function LeftRail() {
                   <small>{task.evidence || "no evidence linked"}</small>
                   {task.source === "gemma4" ? <small>(meta: gemma4)</small> : null}
                 </span>
+                {task.done && task.resolution ? (
+                  <span className="task-resolution" title={task.resolvedAt ? `Recorded ${task.resolvedAt}` : undefined}>
+                    decision: {task.resolution}
+                  </span>
+                ) : null}
               </button>
               <button type="button" className="task-queue-button" aria-label={`Queue ${task.text} for Gemma`} onClick={() => queueDecisionGateForGemma(task.id)}>
                 <FileText size={14} />
               </button>
+              {completingGateId === task.id && !task.done ? (
+                <form
+                  className="gate-note-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!decisionNote.trim()) return;
+                    toggleTask(task.id, decisionNote.trim());
+                    setCompletingGateId("");
+                    setDecisionNote("");
+                  }}
+                >
+                  <input
+                    autoFocus
+                    value={decisionNote}
+                    onChange={(event) => setDecisionNote(event.currentTarget.value)}
+                    placeholder="Reason for decision (recorded to the ledger)"
+                    aria-label={`Reason for completing ${task.text}`}
+                  />
+                  <button type="submit" disabled={!decisionNote.trim()}>Record</button>
+                  <button type="button" onClick={() => { setCompletingGateId(""); setDecisionNote(""); }}>Cancel</button>
+                </form>
+              ) : null}
             </div>
           ))
         ) : (
