@@ -199,7 +199,8 @@ function modelsEndpoint(settings: RuntimeSettings) {
 
 function runtimeHeaders(settings: RuntimeSettings) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (settings.apiKey?.trim()) headers.Authorization = `Bearer ${settings.apiKey.trim()}`;
+  const key = settings.apiKey?.trim();
+  if (key && resolveProvider(settings) === "openai") headers.Authorization = `Bearer ${key}`;
   return headers;
 }
 
@@ -288,7 +289,10 @@ export async function checkRuntimeHealth(settings: RuntimeSettings, signal?: Abo
   try {
     const response = await fetch(modelsEndpoint(settings), {
       signal: controller.signal,
-      headers: settings.apiKey?.trim() ? { Authorization: `Bearer ${settings.apiKey.trim()}` } : undefined,
+      headers:
+        settings.apiKey?.trim() && resolveProvider(settings) === "openai"
+          ? { Authorization: `Bearer ${settings.apiKey.trim()}` }
+          : undefined,
     });
     if (!response.ok) throw new Error(`${label} runtime returned ${response.status}`);
     const json = (await response.json()) as {
@@ -300,8 +304,10 @@ export async function checkRuntimeHealth(settings: RuntimeSettings, signal?: Abo
       ...(json.data?.map((model) => model.id) ?? []),
     ].filter((name): name is string => Boolean(name));
     const model = settings.model || defaultModel(settings);
+    // Some OpenAI-compatible servers do not enumerate models; an empty list is
+    // only acceptable there. An empty Ollama tags list means no model is pulled.
     const modelAvailable =
-      models.length === 0 ||
+      (resolveProvider(settings) === "openai" && models.length === 0) ||
       models.includes(model) ||
       models.some((name) => name.startsWith(model.split(":")[0]));
     return modelAvailable

@@ -264,7 +264,7 @@ export function TopHud() {
                 endpoint: endpointDraft.trim(),
                 model: modelDraft.trim(),
                 provider: providerDraft,
-                apiKey: apiKeyDraft.trim(),
+                apiKey: providerDraft === "openai" ? apiKeyDraft.trim() : "",
                 enabled: true,
               });
               setConfigureOpen(false);
