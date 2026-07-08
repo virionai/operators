@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 const files = {
   canvas: read("src/components/WorkspaceCanvas.tsx"),
-  gemma: read("src/components/GemmaPanel.tsx"),
+  command: read("src/components/CommandPanel.tsx"),
   modeNav: read("src/components/ModeNav.tsx"),
   rail: read("src/components/LeftRail.tsx"),
   store: read("src/store.ts"),
@@ -30,11 +30,11 @@ const checks = [
       files.rail.includes("gate-empty-actions"),
   ],
   [
-    "Gemma action cards create real workspace products",
+    "Command action cards create real workspace products",
     files.store.includes("createCommunicationPlanSurface") &&
-      files.gemma.includes("createDecisionGateSurface") &&
-      files.gemma.includes("createCommunicationPlanSurface") &&
-      files.gemma.includes("buildGemmaWorkspaceFromQueue"),
+      files.command.includes("createDecisionGateSurface") &&
+      files.command.includes("createCommunicationPlanSurface") &&
+      files.command.includes("buildCommandWorkspaceFromQueue"),
   ],
   [
     "Workflow dropdown is removed from the primary navigation",

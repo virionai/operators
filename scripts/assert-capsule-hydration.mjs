@@ -49,7 +49,7 @@ const checks = [
       files.store.includes("original_path"),
   ],
   [
-    "Gemma receives a digest-ready queued capsule item without auto-answering",
+    "Command receives a digest-ready queued capsule item without auto-answering",
     files.store.includes("queueFromHydratedCapsule") &&
       files.store.includes("capsule_hydrated") &&
       files.store.includes("Hydrated capsule"),

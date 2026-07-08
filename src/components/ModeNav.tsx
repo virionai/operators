@@ -6,7 +6,7 @@ const tabs = ["Workspace", "Assets", "Knowledge", "Events"];
 export function ModeNav() {
   const activeTab = useWorkspaceStore((state) => state.activeTab);
   const setTab = useWorkspaceStore((state) => state.setTab);
-  const setGemmaWorkspaceMode = useWorkspaceStore((state) => state.setGemmaWorkspaceMode);
+  const setCommandWorkspaceMode = useWorkspaceStore((state) => state.setCommandWorkspaceMode);
 
   return (
     <nav className="mode-nav" aria-label="Workspace navigation">
@@ -17,14 +17,14 @@ export function ModeNav() {
             className={tab === activeTab ? "active" : ""}
             type="button"
             onClick={() => {
-              setGemmaWorkspaceMode(false);
+              setCommandWorkspaceMode(false);
               setTab(tab);
             }}
           >
             {tab}
           </button>
         ))}
-        <button className="agent-nav-button" type="button" onClick={() => setGemmaWorkspaceMode(true)}>
+        <button className="agent-nav-button" type="button" onClick={() => setCommandWorkspaceMode(true)}>
           <Bot size={13} />
           Agent
         </button>

@@ -220,7 +220,7 @@ function extractAnswerText(json: ChatResponse) {
   );
 }
 
-export async function runGemmaQuestion(
+export async function runCommandQuestion(
   question: string,
   settings: RuntimeSettings,
   attachments: Attachment[],

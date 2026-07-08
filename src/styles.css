@@ -13,9 +13,9 @@
   --rose: #c97b8b;
   --amber: #c9a87b;
   --violet: #a277d8;
-  --gemma-a: #ff7a18;
-  --gemma-b: #f04db4;
-  --gemma-c: #1d8cff;
+  --command-a: #ff7a18;
+  --command-b: #f04db4;
+  --command-c: #1d8cff;
   --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
@@ -579,7 +579,7 @@ p {
 .rail-panel,
 .canvas-panel,
 .document-viewer,
-.gemma-panel {
+.command-panel {
   border: 1px solid rgba(245, 245, 240, 0.1);
   border-radius: 6px;
   background:
@@ -630,7 +630,7 @@ p {
 .panel-heading h2,
 .canvas-heading h2,
 .bottom-queue h2,
-.gemma-panel h2 {
+.command-panel h2 {
   color: var(--text);
   font-family: var(--mono);
   font-size: 14px;
@@ -1508,7 +1508,7 @@ p {
   color: #ef4d52;
 }
 
-.gemma-panel {
+.command-panel {
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -1518,11 +1518,11 @@ p {
   border-color: transparent;
   background:
     linear-gradient(#071017, #071017) padding-box,
-    linear-gradient(135deg, var(--gemma-a), var(--gemma-b), var(--gemma-c)) border-box;
+    linear-gradient(135deg, var(--command-a), var(--command-b), var(--command-c)) border-box;
   box-shadow: 0 0 34px rgba(240, 77, 180, 0.22), 0 0 48px rgba(29, 140, 255, 0.13);
 }
 
-.gemma-panel header {
+.command-panel header {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) 23px 29px 23px;
   gap: 8px;
@@ -1530,27 +1530,27 @@ p {
   padding: 14px 14px 10px;
 }
 
-.gemma-title-row {
+.command-title-row {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 10px;
 }
 
-.gemma-panel h2 {
+.command-panel h2 {
   overflow: hidden;
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.gemma-panel small {
+.command-panel small {
   color: #98a5a8;
   font-family: var(--mono);
   font-size: 10px;
 }
 
-.gemma-panel header button {
+.command-panel header button {
   display: inline-grid;
   place-items: center;
   width: 23px;
@@ -1567,24 +1567,24 @@ p {
   cursor: pointer;
 }
 
-.gemma-panel header button.window-max {
+.command-panel header button.window-max {
   width: 29px;
   min-width: 29px;
 }
 
-.gemma-panel header button.window-close:hover {
+.command-panel header button.window-close:hover {
   color: #ffdfe5;
   border-color: rgba(201, 123, 139, 0.52);
   background: rgba(201, 123, 139, 0.13);
 }
 
-.gemma-panel header button span {
+.command-panel header button span {
   color: currentColor;
   font-size: 9px;
   text-transform: none;
 }
 
-.gemma-sigil {
+.command-sigil {
   display: grid;
   place-items: center;
   width: 28px;
@@ -1631,7 +1631,7 @@ p {
   background: rgba(16, 70, 126, 0.35);
 }
 
-.message-gemma {
+.message-command {
   justify-self: start;
 }
 
@@ -1935,13 +1935,13 @@ p {
   color: var(--violet);
 }
 
-.gemma-cards {
+.command-cards {
   display: grid;
   gap: 8px;
   padding: 0 14px 12px;
 }
 
-.gemma-cards button {
+.command-cards button {
   display: grid;
   grid-template-columns: 18px 1fr auto;
   align-items: center;
@@ -1955,17 +1955,17 @@ p {
   cursor: pointer;
 }
 
-.gemma-cards span,
-.gemma-cards small {
+.command-cards span,
+.command-cards small {
   display: block;
 }
 
-.gemma-cards span {
+.command-cards span {
   font-family: var(--mono);
   font-size: 10px;
 }
 
-.gemma-cards b {
+.command-cards b {
   padding: 4px 8px;
   border: 1px solid rgba(43, 180, 255, 0.4);
   border-radius: 3px;
@@ -1975,14 +1975,14 @@ p {
   font-weight: 400;
 }
 
-.gemma-input {
+.command-input {
   display: grid;
   grid-template-columns: 1fr 34px;
   gap: 8px;
   padding: 12px 14px 16px;
 }
 
-.gemma-input input {
+.command-input input {
   min-width: 0;
   height: 38px;
   padding: 0 12px;
@@ -1995,7 +1995,7 @@ p {
   font-size: 11px;
 }
 
-.gemma-input button {
+.command-input button {
   display: grid;
   place-items: center;
   border: 1px solid rgba(123, 167, 201, 0.22);
@@ -2005,7 +2005,7 @@ p {
   cursor: pointer;
 }
 
-.gemma-dock {
+.command-dock {
   position: fixed;
   right: 18px;
   bottom: 82px;
@@ -2019,16 +2019,16 @@ p {
   color: var(--text);
   background:
     radial-gradient(circle at 55% 52%, rgba(255, 255, 255, 0.55), transparent 7%),
-    linear-gradient(135deg, var(--gemma-a), var(--gemma-b) 47%, var(--gemma-c));
+    linear-gradient(135deg, var(--command-a), var(--command-b) 47%, var(--command-c));
   box-shadow: 0 0 34px rgba(240, 77, 180, 0.4), 0 0 40px rgba(29, 140, 255, 0.22);
   cursor: pointer;
 }
 
-.gemma-dock.busy {
+.command-dock.busy {
   animation: dockPulse 1.4s ease-in-out infinite;
 }
 
-.gemma-dock span {
+.command-dock span {
   position: absolute;
   top: -4px;
   right: 2px;
@@ -2488,11 +2488,11 @@ p {
     max-height: 300px;
   }
 
-  .gemma-panel {
+  .command-panel {
     min-height: 620px;
   }
 
-  .gemma-dock {
+  .command-dock {
     right: 14px;
     bottom: 14px;
   }
@@ -2513,7 +2513,7 @@ p {
   .bottom-queue,
   .left-rail,
   .workspace-canvas,
-  .gemma-panel {
+  .command-panel {
     width: 100%;
     max-width: 100vw;
   }
@@ -2544,7 +2544,7 @@ p {
     display: none;
   }
 
-  .gemma-dock {
+  .command-dock {
     width: 58px;
     height: 58px;
   }
@@ -2556,7 +2556,7 @@ p {
   }
 }
 
-/* Review pass: compact HUD, overlay Gemma, movable canvas, and tiny footer queue. */
+/* Review pass: compact HUD, overlay Command, movable canvas, and tiny footer queue. */
 .app-shell {
   grid-template-rows: 84px 40px minmax(0, 1fr) 38px;
 }
@@ -3163,7 +3163,7 @@ p {
   line-height: 1.45;
 }
 
-.gemma-panel {
+.command-panel {
   position: absolute;
   top: 8px;
   right: 12px;
@@ -3173,7 +3173,7 @@ p {
   min-height: 0;
 }
 
-.gemma-dock {
+.command-dock {
   right: 18px;
   bottom: 50px;
 }
@@ -3521,7 +3521,7 @@ p {
   min-height: calc(100% - 58px);
 }
 
-.canvas-panel.gemma-active {
+.canvas-panel.command-active {
   border-color: rgba(240, 77, 180, 0.48);
   box-shadow:
     0 0 0 1px rgba(240, 77, 180, 0.14),
@@ -3601,7 +3601,7 @@ p {
   background: rgba(0, 0, 0, 0.22);
 }
 
-.gemma-panel header .thinking-toggle {
+.command-panel header .thinking-toggle {
   display: inline-flex;
   flex: 0 0 auto;
   width: auto;
@@ -4393,7 +4393,7 @@ p {
   transform: translate(-50%, -50%);
 }
 
-.gemma-panel.gemma-floating {
+.command-panel.command-floating {
   position: fixed;
   right: auto;
   bottom: auto;
@@ -4407,12 +4407,12 @@ p {
   z-index: 35;
 }
 
-.gemma-floating > header {
+.command-floating > header {
   cursor: move;
   touch-action: none;
 }
 
-.gemma-panel.gemma-floating.gemma-workspace-view {
+.command-panel.command-floating.command-workspace-view {
   top: 154px;
   right: 20px;
   bottom: 48px;
@@ -4427,40 +4427,40 @@ p {
   z-index: 38;
 }
 
-.gemma-workspace-view > header {
+.command-workspace-view > header {
   cursor: default;
 }
 
-.gemma-workspace-view .message-stack {
+.command-workspace-view .message-stack {
   grid-template-columns: minmax(300px, 0.72fr) minmax(360px, 1fr);
   align-content: stretch;
 }
 
-.gemma-workspace-view .message-stack > .message,
-.gemma-workspace-view .message-stack > .workspace-queue,
-.gemma-workspace-view .message-stack > .runtime-connection-notice {
+.command-workspace-view .message-stack > .message,
+.command-workspace-view .message-stack > .workspace-queue,
+.command-workspace-view .message-stack > .runtime-connection-notice {
   max-width: 100%;
 }
 
-.gemma-workspace-view .agent-workspace-render {
+.command-workspace-view .agent-workspace-render {
   grid-column: 2;
   grid-row: auto;
   align-self: start;
   overflow: auto;
 }
 
-.gemma-workspace-view .agent-workspace-grid {
+.command-workspace-view .agent-workspace-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-/* Gemma workspace formatting reset */
-.gemma-workspace-view .message-stack {
+/* Command workspace formatting reset */
+.command-workspace-view .message-stack {
   align-content: start;
   align-items: start;
   grid-template-columns: minmax(300px, 0.86fr) minmax(320px, 0.64fr);
 }
 
-.gemma-workspace-view .agent-workspace-render {
+.command-workspace-view .agent-workspace-render {
   grid-column: 2;
   grid-row: auto;
   align-self: start;
@@ -4468,20 +4468,20 @@ p {
   overflow: auto;
 }
 
-.gemma-workspace-view .agent-workspace-grid {
+.command-workspace-view .agent-workspace-grid {
   align-content: start;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.gemma-workspace-view .agent-render-card,
-.gemma-workspace-view .agent-render-empty {
+.command-workspace-view .agent-render-card,
+.command-workspace-view .agent-render-empty {
   min-height: 0;
 }
 
-.gemma-workspace-view .agent-render-card .markdown-render {
+.command-workspace-view .agent-render-card .markdown-render {
   max-height: 240px;
 }
-/* End Gemma workspace formatting reset */
+/* End Command workspace formatting reset */
 
 .task-context-button,
 .task-queue-button {
@@ -5029,7 +5029,7 @@ p {
     width: 100%;
   }
 
-  .gemma-panel {
+  .command-panel {
     position: relative;
     top: auto;
     right: auto;

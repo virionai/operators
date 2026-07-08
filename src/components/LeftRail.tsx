@@ -13,7 +13,7 @@ export function LeftRail() {
   const snippets = useWorkspaceStore((state) => state.snippets);
   const selectedAttachmentId = useWorkspaceStore((state) => state.selectedAttachmentId);
   const toggleTask = useWorkspaceStore((state) => state.toggleTask);
-  const queueDecisionGateForGemma = useWorkspaceStore((state) => state.queueDecisionGateForGemma);
+  const queueDecisionGateForCommand = useWorkspaceStore((state) => state.queueDecisionGateForCommand);
   const createDecisionGateSurface = useWorkspaceStore((state) => state.createDecisionGateSurface);
   const setTab = useWorkspaceStore((state) => state.setTab);
   const setGraphMode = useWorkspaceStore((state) => state.setGraphMode);
@@ -33,8 +33,8 @@ export function LeftRail() {
   const payloadTotal = payloadSummary.reduce((sum, item) => sum + item.value, 0);
   const payloadFill = Math.min(100, Math.max(8, payloadTotal * 14));
   const contextHelp = attachments.length > 0
-    ? "Local artifacts are staged for inspection. Gemma can use selected context and ledger events without leaving this runtime."
-    : "No evidence loaded. Stage local artifacts or ask Gemma to create the first workspace surface.";
+    ? "Local artifacts are staged for inspection. Command can use selected context and ledger events without leaving this runtime."
+    : "No evidence loaded. Stage local artifacts or ask Command to create the first workspace surface.";
 
   return (
     <aside className="left-rail" aria-label="Investigation assets" tabIndex={0}>
@@ -101,7 +101,7 @@ export function LeftRail() {
           <GitBranch size={18} />
           <span>
             <strong>{knowledgeFacts.length ? `${knowledgeFacts.length} relationship${knowledgeFacts.length === 1 ? "" : "s"}` : "No relationships discovered"}</strong>
-            <small>{knowledgeFacts.length ? knowledgeFacts.slice(-2).map((fact) => `${fact.source} ${fact.relation} ${fact.target}`).join(" · ") : "Gemma can update the graph from accepted workspace schemas."}</small>
+            <small>{knowledgeFacts.length ? knowledgeFacts.slice(-2).map((fact) => `${fact.source} ${fact.relation} ${fact.target}`).join(" · ") : "Command can update the graph from accepted workspace schemas."}</small>
           </span>
         </button>
       </section>
@@ -130,7 +130,7 @@ export function LeftRail() {
                 type="button"
                 className="task-context-button"
                 title={task.evidence ? `Evidence: ${task.evidence}` : "No evidence linked"}
-                onClick={() => queueDecisionGateForGemma(task.id)}
+                onClick={() => queueDecisionGateForCommand(task.id)}
               >
                 {task.text}
                 <span className="task-meta-line">
@@ -144,7 +144,7 @@ export function LeftRail() {
                   </span>
                 ) : null}
               </button>
-              <button type="button" className="task-queue-button" aria-label={`Queue ${task.text} for Gemma`} onClick={() => queueDecisionGateForGemma(task.id)}>
+              <button type="button" className="task-queue-button" aria-label={`Queue ${task.text} for Command`} onClick={() => queueDecisionGateForCommand(task.id)}>
                 <FileText size={14} />
               </button>
               {completingGateId === task.id && !task.done ? (
@@ -288,7 +288,7 @@ export function LeftRail() {
               </button>
             );
           })}
-          {attachments.length === 0 && declaration.declared ? <p className="rail-empty">Uploaded files and Gemma-created reports will appear here as payload assets.</p> : null}
+          {attachments.length === 0 && declaration.declared ? <p className="rail-empty">Uploaded files and Command-created reports will appear here as payload assets.</p> : null}
         </div>
       </section>
     </aside>

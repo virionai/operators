@@ -44,7 +44,7 @@ export function WorkspaceCanvas() {
   const requestCanvasModule = useWorkspaceStore((state) => state.requestCanvasModule);
   const addUploadedAttachments = useWorkspaceStore((state) => state.addUploadedAttachments);
   const addContextSnippet = useWorkspaceStore((state) => state.addContextSnippet);
-  const askGemma = useWorkspaceStore((state) => state.askGemma);
+  const askCommand = useWorkspaceStore((state) => state.askCommand);
   const sealCapsule = useWorkspaceStore((state) => state.sealCapsule);
   const selectAttachment = useWorkspaceStore((state) => state.selectAttachment);
   const setDocumentOpen = useWorkspaceStore((state) => state.setDocumentOpen);
@@ -200,11 +200,11 @@ export function WorkspaceCanvas() {
           <button
             type="button"
             onClick={() => {
-              void askGemma(`Inspect the current ${graphMode} workspace and identify the next evidence-linked action.`);
+              void askCommand(`Inspect the current ${graphMode} workspace and identify the next evidence-linked action.`);
               setContextMenu(null);
             }}
           >
-            Ask Gemma
+            Ask Command
           </button>
           <button type="button" onClick={() => { void requestCanvasModule("markdown"); setContextMenu(null); }}>
             Add Evidence Note
@@ -249,7 +249,7 @@ function KnowledgeGraphWorkspace({
       <header>
         <div>
           <h3>Knowledge Graph</h3>
-          <p>{facts.length ? `${facts.length} deduplicated relationship${facts.length === 1 ? "" : "s"} from Gemma facts` : "No graph facts accepted yet"}</p>
+          <p>{facts.length ? `${facts.length} deduplicated relationship${facts.length === 1 ? "" : "s"} from Command facts` : "No graph facts accepted yet"}</p>
         </div>
         <button type="button" onClick={onCreateGraph}><GitBranch size={13} /> Graph schema</button>
       </header>
@@ -278,7 +278,7 @@ function KnowledgeGraphWorkspace({
         <div className="kg-empty-state">
           <GitBranch size={24} />
           <strong>No relationships discovered</strong>
-          <p>Queue evidence or a graph surface, then ask Gemma to publish knowledge facts.</p>
+          <p>Queue evidence or a graph surface, then ask Command to publish knowledge facts.</p>
         </div>
       )}
       <div className="kg-edge-list">
@@ -291,7 +291,7 @@ function KnowledgeGraphWorkspace({
             </button>
           ))
         ) : (
-          <span>Knowledge facts will appear here after Gemma returns the graph schema.</span>
+          <span>Knowledge facts will appear here after Command returns the graph schema.</span>
         )}
       </div>
     </section>
@@ -461,7 +461,7 @@ function AssetBrowserWorkspace({
               </button>
             ))
           ) : (
-            <p className="asset-browser-empty">Workspace reports and Gemma-generated surfaces will appear here as retrievable payload files.</p>
+            <p className="asset-browser-empty">Workspace reports and Command-generated surfaces will appear here as retrievable payload files.</p>
           )}
         </section>
       </div>
@@ -546,7 +546,7 @@ function Panel({
   return (
     <article
       ref={panelRef}
-      className={`canvas-panel accent-${module.accent} ${active ? "gemma-active" : ""} ${module.docked || module.kind === "command-table" ? "panel-wide" : ""} ${module.kind === "table" ? "table-panel" : ""} ${module.collapsed ? "collapsed" : ""} ${generatedConcern ? "concern-panel" : ""}`}
+      className={`canvas-panel accent-${module.accent} ${active ? "command-active" : ""} ${module.docked || module.kind === "command-table" ? "panel-wide" : ""} ${module.kind === "table" ? "table-panel" : ""} ${module.collapsed ? "collapsed" : ""} ${generatedConcern ? "concern-panel" : ""}`}
       style={{
         left: module.grid?.x,
         top: module.grid?.y,
@@ -626,7 +626,7 @@ function EmptyCanvas({ onAdd, onUpload }: { onAdd: (kind: CanvasModuleKind) => P
     <section className="canvas-empty">
       <div>
         <h3>Blank Operational Surface</h3>
-        <p>Create a surface, upload evidence, or let Gemma generate the first frame from local context.</p>
+        <p>Create a surface, upload evidence, or let Command generate the first frame from local context.</p>
       </div>
       <div className="empty-actions">
         <button type="button" onClick={() => void onAdd("markdown")}><FileText size={14} /> Note</button>
@@ -925,7 +925,7 @@ function graphLabelsFromText(text: string) {
       return "";
     })
     .map((line) => line.replace(/[`*_:[\]()]/g, "").trim())
-    .filter((line) => line.length > 2 && !/source response|gemma concern/i.test(line));
+    .filter((line) => line.length > 2 && !/source response|command concern/i.test(line));
   const unique = [...new Set(candidates)].slice(0, 5);
   return unique.length ? unique : ["Concern", "Evidence", "Risk", "Action", "Capsule"];
 }
@@ -987,16 +987,16 @@ function EvidenceCard({ selectedAttachmentName, kind }: { selectedAttachmentName
 }
 
 function QuerySurface() {
-  const askGemma = useWorkspaceStore((state) => state.askGemma);
+  const askCommand = useWorkspaceStore((state) => state.askCommand);
   return (
     <div className="query-surface">
-      <button type="button" onClick={() => void askGemma("Correlate the current artifacts and list the highest-confidence containment action.")}>
+      <button type="button" onClick={() => void askCommand("Correlate the current artifacts and list the highest-confidence containment action.")}>
         Correlate artifacts
       </button>
-      <button type="button" onClick={() => void askGemma("Extract entities from the selected artifact and map them to the active topology.")}>
+      <button type="button" onClick={() => void askCommand("Extract entities from the selected artifact and map them to the active topology.")}>
         Extract entities
       </button>
-      <button type="button" onClick={() => void askGemma("Generate an evidence-backed incident continuity summary for handoff.")}>
+      <button type="button" onClick={() => void askCommand("Generate an evidence-backed incident continuity summary for handoff.")}>
         Continuity summary
       </button>
     </div>
@@ -1008,7 +1008,7 @@ function RuntimeComponent({ module }: { module: CanvasModule }) {
   const runtimeHealth = useWorkspaceStore((state) => state.runtimeHealth);
   return (
     <div className="runtime-component">
-      <strong>{module.title === "Gemma Workspace" ? "Queued Build Workspace" : "Local Runtime Signals"}</strong>
+      <strong>{module.title === "Command Workspace" ? "Queued Build Workspace" : "Local Runtime Signals"}</strong>
       <div className="signal-grid">
         <span>{providerLabel(runtime)}</span><b>{runtimeHealth.status}</b>
         <span>Model</span><b>{runtime.model}</b>

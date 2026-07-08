@@ -29,7 +29,7 @@ const DEFAULT_ENVIRONMENT_TOOLS = [
   "- Capsule protocol primitives: manifest, payload chain, event ledger, provenance envelope, local seal/export hooks",
   "- Cryptographic hooks: Ed25519 originator signing, X25519 recipient identity, ChaCha20-Poly1305 envelope policy",
   "- Persistence: IndexedDB snapshot hydration, local event append, offline-only browser state",
-  "- Operator workflow: queue surfaces or files for Gemma, then ask for evidence-linked analysis before updating the workspace",
+  "- Operator workflow: queue surfaces or files for Command, then ask for evidence-linked analysis before updating the workspace",
 ].join("\n");
 
 export function TopHud() {
@@ -207,7 +207,7 @@ export function TopHud() {
                 <textarea
                   value={systemDraft}
                   onChange={(event) => setSystemDraft(event.currentTarget.value)}
-                  placeholder="Tell Gemma how to reason, what to produce, and what to avoid."
+                  placeholder="Tell Command how to reason, what to produce, and what to avoid."
                 />
               </label>
               <label>

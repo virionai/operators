@@ -27,19 +27,19 @@ Configure includes one-click presets for Ollama (`:11434`), LM Studio (`:1234/v1
 
 ## What This App Shows
 
-- A rigid operational surface with persistent top HUD, workspace canvas, Gemma assistant, and bottom analysis queue.
+- A rigid operational surface with persistent top HUD, workspace canvas, Command assistant, and bottom analysis queue.
 - Local runtime status for `Ollama -> gemma4`, with endpoint/model details kept inside Configure.
-- A blank malleable canvas where operators upload artifacts, add surfaces, and queue workspace context before asking Gemma.
+- A blank malleable canvas where operators upload artifacts, add surfaces, and queue workspace context before asking Command.
 - Workspace tabs for Workspace, Assets, Knowledge, and Events, plus a dynamic workspace creation control.
 - Canvas-owned schema controls for notes, diagrams, timelines, graphs, tables, IOC boards, host maps, evidence viewers, and uploaded artifacts.
 - Movable, expandable, collapsible workspace modules with traditional `_ [ ] X` window controls and drag/reorder handles.
-- Highlight-to-context capture that queues selected text for the next Gemma prompt and appends a local event.
+- Highlight-to-context capture that queues selected text for the next Command prompt and appends a local event.
 - Context Continuity view over ledger context, selected snippets, and artifact preview.
 - Browser-local uploads with text/log/json/csv/markdown preview content in the continuity viewer; binary files render local metadata.
-- Gemma Q&A with cancelable local inference and deterministic fallback.
-- A visible Gemma workspace queue with compact item chips for notes, assets, selections, concerns, and generated component frames.
-- Gemma concern artifacts render as operator-facing previews. If the queued workspace request is a graph/topology surface, the concern is created as a graph module instead of a markdown note.
-- Start Here preloads the local runtime environment and available Capsule/Gemma tools so the operator can edit from a useful baseline.
+- Command Q&A with cancelable local inference and deterministic fallback.
+- A visible Command workspace queue with compact item chips for notes, assets, selections, concerns, and generated component frames.
+- Command concern artifacts render as operator-facing previews. If the queued workspace request is a graph/topology surface, the concern is created as a graph module instead of a markdown note.
+- Start Here preloads the local runtime environment and available Capsule/Command tools so the operator can edit from a useful baseline.
 - Environment declaration generates the initial Capsule payload primitives: manifest, payload directory, event chain, and provenance envelope.
 - Model responses can populate Decision Gates through a `decision_gates` JSON schema; parsed gates render in the left rail with a severity chip, linked evidence, and `(meta: gemma4)` attribution. Completing or reopening a gate appends an operator-attributed ledger event (`decision_gate_completed` / `decision_gate_reopened`).
 - Mermaid output renders as real diagrams on graph/mermaid canvas modules and inside markdown notes (strict security level, lazy-loaded renderer, source-view fallback on invalid syntax).

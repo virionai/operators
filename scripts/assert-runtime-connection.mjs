@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 
 const runtime = readFileSync("src/lib/localRuntime.ts", "utf8");
 const store = readFileSync("src/store.ts", "utf8");
-const gemma = readFileSync("src/components/GemmaPanel.tsx", "utf8");
+const command = readFileSync("src/components/CommandPanel.tsx", "utf8");
 const styles = readFileSync("src/styles.css", "utf8");
 const pkg = readFileSync("package.json", "utf8");
 
-const askGemmaBody = sliceBetween(store, "askGemma: async", "cancelInference:");
+const askCommandBody = sliceBetween(store, "askCommand: async", "cancelInference:");
 
 const checks = [
   ["package exposes runtime connection guard", pkg.includes('"test:runtime-connection"')],
@@ -22,20 +22,20 @@ const checks = [
       runtime.includes("Ollama endpoint unreachable"),
   ],
   [
-    "Gemma ask preflights runtime health before request",
-    askGemmaBody.includes("const preflight = await checkRuntimeHealth") &&
-      askGemmaBody.indexOf("const preflight = await checkRuntimeHealth") < askGemmaBody.indexOf("const answer = await runGemmaQuestion"),
+    "Command ask preflights runtime health before request",
+    askCommandBody.includes("const preflight = await checkRuntimeHealth") &&
+      askCommandBody.indexOf("const preflight = await checkRuntimeHealth") < askCommandBody.indexOf("const answer = await runCommandQuestion"),
   ],
   [
     "Fallback status includes the actual runtime failure reason",
-    askGemmaBody.includes("answer.errorDetail") &&
-      askGemmaBody.includes("Deterministic local fallback is active"),
+    askCommandBody.includes("answer.errorDetail") &&
+      askCommandBody.includes("Deterministic local fallback is active"),
   ],
   [
-    "Gemma panel shows reconnect affordance for fallback state",
-    gemma.includes("runtime-connection-notice") &&
-      gemma.includes("Reconnect {providerLabel(runtime)}") &&
-      gemma.includes("checkRuntime"),
+    "Command panel shows reconnect affordance for fallback state",
+    command.includes("runtime-connection-notice") &&
+      command.includes("Reconnect {providerLabel(runtime)}") &&
+      command.includes("checkRuntime"),
   ],
   [
     "Runtime supports OpenAI-compatible providers with optional API key",

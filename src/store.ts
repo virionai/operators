@@ -18,7 +18,7 @@ import { hydrateCapsuleFile, isCapsuleUpload } from "./lib/capsuleHydration";
 import {
   checkRuntimeHealth,
   providerLabel,
-  runGemmaQuestion,
+  runCommandQuestion,
   type FocusedCanvasContext,
   type RuntimeQueueItem,
   type RuntimeHealth,
@@ -37,7 +37,7 @@ import {
 
 type Message = {
   id: string;
-  role: "operator" | "gemma";
+  role: "operator" | "command";
   text: string;
   time: string;
 };
@@ -128,9 +128,9 @@ type WorkspaceState = {
   selectedAttachmentId: string;
   documentOpen: boolean;
   documentQuery: string;
-  gemmaOpen: boolean;
-  gemmaWorkspaceMode: boolean;
-  gemmaBusy: boolean;
+  commandOpen: boolean;
+  commandWorkspaceMode: boolean;
+  commandBusy: boolean;
   runtime: RuntimeSettings;
   runtimeHealth: RuntimeHealth;
   operatorIdentity: OperatorIdentity;
@@ -173,15 +173,15 @@ type WorkspaceState = {
   updateCanvasModuleContent: (id: string, content: string) => void;
   commitCanvasModuleContent: (id: string) => void;
   addGeneratedComponent: () => string;
-  buildGemmaWorkspaceFromQueue: () => void;
+  buildCommandWorkspaceFromQueue: () => void;
   createDecisionGateSurface: () => string;
   createCommunicationPlanSurface: () => string;
   selectAttachment: (id: string) => void;
   addUploadedAttachments: (files: FileList | File[]) => Promise<void>;
   setDocumentOpen: (open: boolean) => void;
   setDocumentQuery: (query: string) => void;
-  toggleGemma: () => void;
-  setGemmaWorkspaceMode: (enabled: boolean) => void;
+  toggleCommand: () => void;
+  setCommandWorkspaceMode: (enabled: boolean) => void;
   updateRuntime: (runtime: Partial<RuntimeSettings>) => void;
   checkRuntime: () => Promise<void>;
   updateOperatorId: (operatorId: string) => void;
@@ -190,9 +190,9 @@ type WorkspaceState = {
   exportOperatorPrivateKeys: () => Promise<void>;
   importOperatorKeyBundle: (file: File) => Promise<void>;
   toggleTask: (id: string, note?: string) => void;
-  queueDecisionGateForGemma: (id: string) => void;
+  queueDecisionGateForCommand: (id: string) => void;
   addContextSnippet: (snippet: string, source: string) => void;
-  askGemma: (question: string) => Promise<void>;
+  askCommand: (question: string) => Promise<void>;
   cancelInference: () => void;
   sealCapsule: () => Promise<void>;
   hydrateSnapshot: (snapshot: Partial<PersistedState>) => void;
@@ -238,9 +238,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   selectedAttachmentId: "",
   documentOpen: false,
   documentQuery: "",
-  gemmaOpen: true,
-  gemmaWorkspaceMode: false,
-  gemmaBusy: false,
+  commandOpen: true,
+  commandWorkspaceMode: false,
+  commandBusy: false,
   runtime: {
     enabled: true,
     endpoint: "http://127.0.0.1:11434/api/chat",
@@ -305,7 +305,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setTab: (tab) =>
     set((state) => ({
       activeTab: tab,
-      gemmaWorkspaceMode: false,
+      commandWorkspaceMode: false,
       graphMode:
         tab === "Knowledge"
           ? "Knowledge Graph"
@@ -365,7 +365,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           state.queuedWorkspaceItems,
           queueFromModule(module, schema),
         ),
-        gemmaOpen: true,
+        commandOpen: true,
         ledger: appendEvent(state.ledger, "workspace_item_queued", spec.title, state.operatorIdentity.operatorId),
         lastSaved: "now",
       };
@@ -453,7 +453,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         {
           id,
           kind: "react-component",
-          title: "Gemma Render Surface",
+          title: "Command Render Surface",
           subtitle: "Generated component frame with inspectable code",
           collapsed: false,
           docked: true,
@@ -461,7 +461,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           accent: "violet",
           grid: nextModuleGrid(state.canvasModules.length, "react-component", true),
           code: [
-            "export function GemmaGeneratedSurface({ ledger }) {",
+            "export function CommandGeneratedSurface({ ledger }) {",
             "  return <EvidenceSignalMap events={ledger.slice(-6)} mode=\"local\" />;",
             "}",
           ].join("\n"),
@@ -469,20 +469,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         ...state.canvasModules,
       ],
       activeModuleId: id,
-      ledger: appendEvent(state.ledger, "component_generated", "gemma-render-surface", "gemma4"),
+      ledger: appendEvent(state.ledger, "component_generated", "command-render-surface", "gemma4"),
       lastSaved: "now",
     }));
     return id;
   },
-  buildGemmaWorkspaceFromQueue: () =>
+  buildCommandWorkspaceFromQueue: () =>
     set((state) => {
       const candidates = state.queuedWorkspaceItems.filter((item) => item.kind === "module" || item.kind === "workspace" || item.icon === "code");
       const sources = candidates.length ? candidates : state.queuedWorkspaceItems.slice(0, 6);
-      const id = `gemma-workspace-${Date.now().toString(36)}`;
+      const id = `command-workspace-${Date.now().toString(36)}`;
       const module: CanvasModule = {
         id,
         kind: "react-component",
-        title: "Gemma Workspace",
+        title: "Command Workspace",
         subtitle: `${sources.length} queued surface${sources.length === 1 ? "" : "s"} assembled for operator review`,
         collapsed: false,
         docked: true,
@@ -490,9 +490,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         accent: "violet",
         grid: nextModuleGrid(state.canvasModules.length, "react-component", true),
         content: [
-          "## Gemma Workspace",
+          "## Command Workspace",
           sources.length
-            ? "Queued surfaces assembled into a build workspace. Ask Gemma to populate, reconcile, or promote these components."
+            ? "Queued surfaces assembled into a build workspace. Ask Command to populate, reconcile, or promote these components."
             : "No queued surfaces yet. Add workspace items or select evidence, then build again.",
           "",
           ...sources.map((item) => `- **${item.label}**: ${item.detail}`),
@@ -504,7 +504,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         canvasModules: [module, ...state.canvasModules],
         activeModuleId: id,
         queuedWorkspaceItems: state.queuedWorkspaceItems.filter((item) => !sources.some((source) => source.id === item.id)),
-        ledger: appendEvent(state.ledger, "gemma_workspace_built", `${sources.length} surfaces`, "gemma4"),
+        ledger: appendEvent(state.ledger, "command_workspace_built", `${sources.length} surfaces`, "gemma4"),
         lastSaved: "now",
       };
     }),
@@ -517,7 +517,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         title: "Decision Gate Board",
         subtitle: state.tasks.length
           ? `${state.tasks.length} evidence-linked gate${state.tasks.length === 1 ? "" : "s"}`
-          : "Operator and Gemma gate schema surface",
+          : "Operator and Command gate schema surface",
         collapsed: false,
         docked: false,
         pinned: false,
@@ -530,7 +530,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         activeTab: "Workspace",
         canvasModules: [module, ...state.canvasModules],
         activeModuleId: id,
-        gemmaOpen: true,
+        commandOpen: true,
         queuedWorkspaceItems: upsertQueueItem(
           state.queuedWorkspaceItems,
           queueFromModule(module, buildDecisionGateWorkspaceSchema()),
@@ -548,7 +548,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         id,
         kind: "markdown",
         title: "Communication Plan",
-        subtitle: "Stakeholder update draft queued for Gemma",
+        subtitle: "Stakeholder update draft queued for Command",
         collapsed: false,
         docked: false,
         pinned: false,
@@ -561,7 +561,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         activeTab: "Workspace",
         canvasModules: [module, ...state.canvasModules],
         activeModuleId: id,
-        gemmaOpen: true,
+        commandOpen: true,
         queuedWorkspaceItems: upsertQueueItem(
           state.queuedWorkspaceItems,
           queueFromModule(module, buildCommunicationPlanSchema()),
@@ -578,10 +578,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       if (!target) return state;
       return {
         activeModuleId: id,
-        gemmaOpen: true,
-        gemmaWorkspaceMode: false,
+        commandOpen: true,
+        commandWorkspaceMode: false,
         queuedWorkspaceItems: upsertQueueItem(state.queuedWorkspaceItems, queueFromModule(target)),
-        ledger: appendEvent(state.ledger, "module_queued_for_gemma", target.title, state.operatorIdentity.operatorId),
+        ledger: appendEvent(state.ledger, "module_queued_for_command", target.title, state.operatorIdentity.operatorId),
         lastSaved: "now",
       };
     }),
@@ -604,8 +604,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       const selected = state.attachments.find((attachment) => attachment.id === id);
       return {
         selectedAttachmentId: id,
-        gemmaOpen: true,
-        gemmaWorkspaceMode: false,
+        commandOpen: true,
+        commandWorkspaceMode: false,
         queuedWorkspaceItems: selected
           ? upsertQueueItem(state.queuedWorkspaceItems, queueFromAttachment(selected))
           : state.queuedWorkspaceItems,
@@ -648,7 +648,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         activeAnalysis: [
           {
             id: `analysis-${Date.now().toString(36)}`,
-            label: hydratedBatches.length > 0 ? "Hydrated capsule ready for Gemma digest" : "Indexing uploaded artifacts",
+            label: hydratedBatches.length > 0 ? "Hydrated capsule ready for Command digest" : "Indexing uploaded artifacts",
             source: uploadLabel,
             confidence: hydratedBatches.length > 0 ? 86 : 72,
             progress: hydratedBatches.length > 0 ? 100 : 44,
@@ -657,7 +657,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           ...state.activeAnalysis.slice(0, 3),
         ],
         queuedWorkspaceItems: nextQueue,
-        gemmaOpen: true,
+        commandOpen: true,
         ledger: nextLedger,
         lastSaved: "now",
       };
@@ -665,8 +665,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   setDocumentOpen: (open) => set({ documentOpen: open }),
   setDocumentQuery: (query) => set({ documentQuery: query }),
-  toggleGemma: () => set((state) => ({ gemmaOpen: !state.gemmaOpen })),
-  setGemmaWorkspaceMode: (enabled) => set({ gemmaWorkspaceMode: enabled, gemmaOpen: true, documentOpen: false }),
+  toggleCommand: () => set((state) => ({ commandOpen: !state.commandOpen })),
+  setCommandWorkspaceMode: (enabled) => set({ commandWorkspaceMode: enabled, commandOpen: true, documentOpen: false }),
   updateRuntime: (runtime) =>
     set((state) => {
       const next = { ...state.runtime, ...runtime };
@@ -802,12 +802,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         lastSaved: "now",
       };
     }),
-  queueDecisionGateForGemma: (id) =>
+  queueDecisionGateForCommand: (id) =>
     set((state) => {
       const task = state.tasks.find((item) => item.id === id);
       if (!task) return state;
       return {
-        gemmaOpen: true,
+        commandOpen: true,
         queuedWorkspaceItems: upsertQueueItem(state.queuedWorkspaceItems, {
           id: `queue-gate-${task.id}`,
           kind: "selection",
@@ -827,13 +827,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       snippets: [...state.snippets, snippet],
       tokenUsed: Math.min(state.tokenMax, state.tokenUsed + Math.max(160, Math.round(snippet.length * 1.7))),
       ledger: appendEvent(state.ledger, "context_added", source, state.operatorIdentity.operatorId),
-      gemmaOpen: true,
+      commandOpen: true,
       queuedWorkspaceItems: upsertQueueItem(state.queuedWorkspaceItems, queueFromSelection(snippet, source)),
       lastSaved: "now",
     })),
-  askGemma: async (question) => {
+  askCommand: async (question) => {
     const trimmed = question.trim();
-    if (!trimmed || get().gemmaBusy) return;
+    if (!trimmed || get().commandBusy) return;
     const controller = new AbortController();
     const analysisId = `analysis-${Date.now().toString(36)}-${randomHex(2)}`;
     const operatorMessage: Message = {
@@ -844,8 +844,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     };
 
     set((state) => ({
-      gemmaOpen: true,
-      gemmaBusy: true,
+      commandOpen: true,
+      commandBusy: true,
       inferenceController: controller,
       messages: [...state.messages, operatorMessage],
       activeAnalysis: [
@@ -864,7 +864,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       );
       const currentState = get();
       const focusedModule = focusedModuleForPrompt(currentState.canvasModules.find((module) => module.id === currentState.activeModuleId));
-      const answer = await runGemmaQuestion(
+      const answer = await runCommandQuestion(
         trimmed,
         currentState.runtime,
         currentState.attachments,
@@ -875,10 +875,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         controller.signal,
       );
       set((current) => {
-        const artifacts = applyGemmaAnswerArtifacts(current, answer.text);
+        const artifacts = applyCommandAnswerArtifacts(current, answer.text);
         const ledgerBase = artifacts.ledger ?? current.ledger;
         return {
-          gemmaBusy: false,
+          commandBusy: false,
           inferenceController: null,
           runtimeHealth: {
             status: answer.usedLocalModel ? "connected" : "fallback",
@@ -900,14 +900,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       });
     } catch (error) {
       set((current) => ({
-        gemmaBusy: false,
+        commandBusy: false,
         inferenceController: null,
         activeAnalysis: resolveAnalysisTask(current.activeAnalysis, analysisId, error instanceof DOMException ? "cancelled" : "failed"),
         messages: [
           ...current.messages,
           {
             id: crypto.randomUUID(),
-            role: "gemma",
+            role: "command",
             text: error instanceof DOMException ? "Inference cancelled by operator." : "Inference failed locally.",
             time: timeLabel(),
           },
@@ -983,6 +983,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   hydrateSnapshot: (snapshot) =>
     set((state) => ({
       ...snapshot,
+      messages: (snapshot.messages || state.messages).map((message) =>
+        (message.role as string) === "gemma" ? { ...message, role: "command" as const } : message,
+      ),
       canvasModules: (snapshot.canvasModules || state.canvasModules).map((module, index) => ({
         ...module,
         grid: module.grid || nextModuleGrid(index, module.kind, module.docked),
@@ -1304,7 +1307,7 @@ function queueFromModule(module: CanvasModule | undefined, schema?: unknown): Wo
       icon: "workspace",
       tone: "blue",
       label: "Workspace item",
-      detail: "Workspace item queued for Gemma.",
+      detail: "Workspace item queued for Command.",
       queuedAt: timeLabel(),
       schema,
     };
@@ -1351,7 +1354,7 @@ function queueFromHydratedCapsule(attachment: Attachment, hydration: CapsuleHydr
     content: [
       "HYDRATED CAPSULE ASSET MAP",
       `Directory: ${capsuleAssetDirectory(hydration)}`,
-      "Gemma should reason over the namespaced asset paths and preserve original paths as source metadata.",
+      "Command should reason over the namespaced asset paths and preserve original paths as source metadata.",
       "",
       hydration.digestPrompt,
     ].join("\n"),
@@ -1390,13 +1393,13 @@ function queueFromSelection(snippet: string, source: string): WorkspaceQueueItem
   };
 }
 
-function applyGemmaAnswerArtifacts(
+function applyCommandAnswerArtifacts(
   state: WorkspaceState,
   text: string,
 ): Partial<Pick<WorkspaceState, "messages" | "canvasModules" | "activeModuleId" | "queuedWorkspaceItems" | "tasks" | "knowledgeFacts" | "ledger">> {
   const message = {
     id: crypto.randomUUID(),
-    role: "gemma" as const,
+    role: "command" as const,
     text,
     time: timeLabel(),
   };
@@ -1440,10 +1443,10 @@ function applyGemmaAnswerArtifacts(
       : baseArtifacts;
   }
 
-  const id = `gemma-finding-${Date.now().toString(36)}`;
+  const id = `command-finding-${Date.now().toString(36)}`;
   const graphRequested = shouldRenderConcernAsGraph(state, text);
   const mermaidCode = extractMermaidCode(text);
-  const title = graphRequested ? `${titleFromGemmaResponse(text, concern)} Graph` : titleFromGemmaResponse(text, concern);
+  const title = graphRequested ? `${titleFromCommandResponse(text, concern)} Graph` : titleFromCommandResponse(text, concern);
   const module: CanvasModule = {
     id,
     kind: graphRequested ? "graph" : "markdown",
@@ -1525,7 +1528,7 @@ function extractDecisionGatesFromChecklist(text: string): ParsedDecisionGate[] {
     gates.push({
       text: raw.replace(/\s*\((?:severity|sev|evidence|source)[^)]+\)/gi, "").trim(),
       severity: normalizeSeverity(severityMatch?.[1]),
-      evidence: evidenceMatch?.[1]?.trim() || "Gemma response",
+      evidence: evidenceMatch?.[1]?.trim() || "Command response",
     });
   }
   return gates;
@@ -1538,7 +1541,7 @@ function normalizeDecisionGate(value: unknown): ParsedDecisionGate | null {
   return {
     text,
     severity: normalizeSeverity(typeof value.severity === "string" ? value.severity : ""),
-    evidence: typeof value.evidence === "string" && value.evidence.trim() ? value.evidence.trim() : "Gemma response",
+    evidence: typeof value.evidence === "string" && value.evidence.trim() ? value.evidence.trim() : "Command response",
   };
 }
 
@@ -1589,11 +1592,11 @@ function extractConcern(text: string) {
   return concern?.slice(0, 120) ?? "";
 }
 
-function titleFromGemmaResponse(text: string, fallback: string) {
+function titleFromCommandResponse(text: string, fallback: string) {
   const heading = text.match(/^\s{0,3}#{1,3}\s+(.+)$/m)?.[1];
   const bold = text.match(/\*\*([^*\n]{4,70})\*\*/)?.[1];
   const candidate = (heading || bold || fallback)
-    .replace(/\b(gemma|concern|warning|risk)\b[:\s-]*/gi, "")
+    .replace(/\b(command|concern|warning|risk)\b[:\s-]*/gi, "")
     .replace(/[`*_#[\]{}()]/g, "")
     .trim();
   return titleCase(candidate || "Operational Finding").slice(0, 72);
@@ -1621,7 +1624,7 @@ function shouldRenderConcernAsGraph(state: WorkspaceState, text: string) {
 
 function formatConcernPreview(concern: string, text: string) {
   return [
-    `## ${titleFromGemmaResponse(text, concern)}`,
+    `## ${titleFromCommandResponse(text, concern)}`,
     concern,
     "",
     "### Source response",
@@ -1750,7 +1753,7 @@ function normalizeKnowledgeFact(value: unknown): KnowledgeFact | null {
   const relation = stringField(value, "relation") || stringField(value, "predicate") || stringField(value, "verb");
   const target = stringField(value, "target") || stringField(value, "object") || stringField(value, "to");
   if (!source || !relation || !target) return null;
-  const evidence = stringField(value, "evidence") || "Gemma response";
+  const evidence = stringField(value, "evidence") || "Command response";
   return {
     id: knowledgeFactId(source, relation, target),
     source,
@@ -1964,17 +1967,17 @@ function snapGridPlacement(grid: CanvasGridPlacement): CanvasGridPlacement {
 
 function defaultContent(kind: CanvasModuleKind) {
   if (kind === "markdown") {
-    return "## Operator note\nUse this surface to capture observations, questions, or local reasoning. Queue the note for Gemma when you want help shaping it.";
+    return "## Operator note\nUse this surface to capture observations, questions, or local reasoning. Queue the note for Command when you want help shaping it.";
   }
   if (kind === "query-surface") {
-    return "Ask Gemma to transform local evidence into a workspace item, decision gate, or event update.";
+    return "Ask Command to transform local evidence into a workspace item, decision gate, or event update.";
   }
   return "";
 }
 
 function defaultCode(kind: CanvasModuleKind) {
   if (kind === "mermaid") {
-    return ["flowchart LR", "  A[Local Artifact] --> B[Gemma Reasoning]", "  B --> C[Ledger Event]", "  C --> D[Capsule Handoff]"].join("\n");
+    return ["flowchart LR", "  A[Local Artifact] --> B[Command Reasoning]", "  B --> C[Ledger Event]", "  C --> D[Capsule Handoff]"].join("\n");
   }
   if (kind === "react-component") {
     return [
@@ -1990,8 +1993,8 @@ function buildWorkspaceItemSchema(kind: CanvasModuleKind, title: string) {
   return {
     schema_version: "capsules-run-operators.workspace_update.v1",
     actor: {
-      actor_id: "ai:gemma",
-      label: "Gemma",
+      actor_id: "ai:command",
+      label: "Command",
     },
     workspace_items: [
       {
@@ -2007,7 +2010,7 @@ function buildWorkspaceItemSchema(kind: CanvasModuleKind, title: string) {
           event_target: `payload/workspace/${kind}.md`,
         },
         provenance: {
-          source: "gemma",
+          source: "command",
           untrusted: true,
         },
       },
@@ -2031,8 +2034,8 @@ function buildDecisionGateWorkspaceSchema() {
   return {
     schema_version: "capsules-run-operators.decision_gate_surface.v1",
     actor: {
-      actor_id: "ai:gemma",
-      label: "Gemma",
+      actor_id: "ai:command",
+      label: "Command",
     },
     decision_gate_surface: {
       purpose: "Populate operator decision gates from local evidence and queued context.",
@@ -2055,8 +2058,8 @@ function buildCommunicationPlanSchema() {
   return {
     schema_version: "capsules-run-operators.communication_plan.v1",
     actor: {
-      actor_id: "ai:gemma",
-      label: "Gemma",
+      actor_id: "ai:command",
+      label: "Command",
     },
     communication_plan: {
       purpose: "Draft operator-reviewed stakeholder communications from local evidence only.",

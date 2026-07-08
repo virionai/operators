@@ -20,14 +20,14 @@ import { providerLabel } from "../lib/localRuntime";
 import { useWorkspaceStore, type CanvasModule, type WorkspaceQueueItem } from "../store";
 import { hideThinkingSections, MarkdownRender } from "./MarkdownRender";
 
-export function GemmaPanel() {
-  const gemmaOpen = useWorkspaceStore((state) => state.gemmaOpen);
-  const gemmaWorkspaceMode = useWorkspaceStore((state) => state.gemmaWorkspaceMode);
-  const gemmaBusy = useWorkspaceStore((state) => state.gemmaBusy);
+export function CommandPanel() {
+  const commandOpen = useWorkspaceStore((state) => state.commandOpen);
+  const commandWorkspaceMode = useWorkspaceStore((state) => state.commandWorkspaceMode);
+  const commandBusy = useWorkspaceStore((state) => state.commandBusy);
   const runtime = useWorkspaceStore((state) => state.runtime);
   const runtimeHealth = useWorkspaceStore((state) => state.runtimeHealth);
-  const toggleGemma = useWorkspaceStore((state) => state.toggleGemma);
-  const setGemmaWorkspaceMode = useWorkspaceStore((state) => state.setGemmaWorkspaceMode);
+  const toggleCommand = useWorkspaceStore((state) => state.toggleCommand);
+  const setCommandWorkspaceMode = useWorkspaceStore((state) => state.setCommandWorkspaceMode);
   const checkRuntime = useWorkspaceStore((state) => state.checkRuntime);
   const messages = useWorkspaceStore((state) => state.messages);
   const queuedWorkspaceItems = useWorkspaceStore((state) => state.queuedWorkspaceItems);
@@ -36,27 +36,27 @@ export function GemmaPanel() {
   const activeAnalysis = useWorkspaceStore((state) => state.activeAnalysis);
   const canvasModules = useWorkspaceStore((state) => state.canvasModules);
   const focusCanvasModule = useWorkspaceStore((state) => state.focusCanvasModule);
-  const askGemma = useWorkspaceStore((state) => state.askGemma);
+  const askCommand = useWorkspaceStore((state) => state.askCommand);
   const cancelInference = useWorkspaceStore((state) => state.cancelInference);
-  const buildGemmaWorkspaceFromQueue = useWorkspaceStore((state) => state.buildGemmaWorkspaceFromQueue);
+  const buildCommandWorkspaceFromQueue = useWorkspaceStore((state) => state.buildCommandWorkspaceFromQueue);
   const createDecisionGateSurface = useWorkspaceStore((state) => state.createDecisionGateSurface);
   const createCommunicationPlanSurface = useWorkspaceStore((state) => state.createCommunicationPlanSurface);
   const [input, setInput] = useState("");
   const [showThinking, setShowThinking] = useState(false);
-  const [gemmaPosition, setGemmaPosition] = useState(() => ({
+  const [commandPosition, setCommandPosition] = useState(() => ({
     x: typeof window === "undefined" ? 1180 : Math.max(720, window.innerWidth - 380),
     y: 166,
   }));
   const endRef = useRef<HTMLDivElement | null>(null);
   const renderedWorkspaceModules = workspaceRenderModules(canvasModules);
 
-  function startGemmaMove(event: React.PointerEvent<HTMLElement>) {
-    if (gemmaWorkspaceMode) return;
+  function startCommandMove(event: React.PointerEvent<HTMLElement>) {
+    if (commandWorkspaceMode) return;
     if ((event.target as HTMLElement).closest("button")) return;
-    const offsetX = event.clientX - gemmaPosition.x;
-    const offsetY = event.clientY - gemmaPosition.y;
+    const offsetX = event.clientX - commandPosition.x;
+    const offsetY = event.clientY - commandPosition.y;
     const move = (moveEvent: PointerEvent) => {
-      setGemmaPosition({
+      setCommandPosition({
         x: Math.min(Math.max(12, moveEvent.clientX - offsetX), window.innerWidth - 352),
         y: Math.min(Math.max(92, moveEvent.clientY - offsetY), window.innerHeight - 220),
       });
@@ -71,51 +71,51 @@ export function GemmaPanel() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, queuedWorkspaceItems.length, gemmaOpen]);
+  }, [messages.length, queuedWorkspaceItems.length, commandOpen]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const question = input.trim();
     if (!question) return;
     setInput("");
-    void askGemma(question);
+    void askCommand(question);
   }
 
   return (
     <>
-      {gemmaOpen ? (
+      {commandOpen ? (
         <aside
-          className={`gemma-panel gemma-floating ${gemmaWorkspaceMode ? "gemma-workspace-view" : ""}`}
-          style={gemmaWorkspaceMode ? undefined : { left: gemmaPosition.x, top: gemmaPosition.y }}
-          aria-label="Gemma AI assistant"
+          className={`command-panel command-floating ${commandWorkspaceMode ? "command-workspace-view" : ""}`}
+          style={commandWorkspaceMode ? undefined : { left: commandPosition.x, top: commandPosition.y }}
+          aria-label="Command AI assistant"
         >
-          <header onPointerDown={startGemmaMove}>
-            <span className="gemma-sigil"><Sparkles size={18} /></span>
-            <div className="gemma-title-row">
-              <h2>Gemma</h2>
+          <header onPointerDown={startCommandMove}>
+            <span className="command-sigil"><Sparkles size={18} /></span>
+            <div className="command-title-row">
+              <h2>Command</h2>
               <button
                 type="button"
                 className="thinking-toggle"
                 aria-pressed={showThinking}
-                aria-label={showThinking ? "Hide Gemma thinking" : "Show Gemma thinking"}
+                aria-label={showThinking ? "Hide Command thinking" : "Show Command thinking"}
                 onClick={() => setShowThinking((current) => !current)}
               >
                 {showThinking ? "Hide thinking" : "Show thinking"}
               </button>
             </div>
-            <button className="window-control window-min" type="button" aria-label="Minimize Gemma" onClick={toggleGemma}>
+            <button className="window-control window-min" type="button" aria-label="Minimize Command" onClick={toggleCommand}>
               <span aria-hidden="true">_</span>
             </button>
             <button
               type="button"
               className="window-control window-max"
-              aria-label={gemmaWorkspaceMode ? "Return Gemma to floating view" : "Open Gemma workspace view"}
-              title={gemmaWorkspaceMode ? "Floating view" : "Workspace view"}
-              onClick={() => setGemmaWorkspaceMode(!gemmaWorkspaceMode)}
+              aria-label={commandWorkspaceMode ? "Return Command to floating view" : "Open Command workspace view"}
+              title={commandWorkspaceMode ? "Floating view" : "Workspace view"}
+              onClick={() => setCommandWorkspaceMode(!commandWorkspaceMode)}
             >
               <span aria-hidden="true">[ ]</span>
             </button>
-            <button className="window-control window-close" type="button" aria-label="Close Gemma" onClick={toggleGemma}>
+            <button className="window-control window-close" type="button" aria-label="Close Command" onClick={toggleCommand}>
               <span aria-hidden="true">X</span>
             </button>
           </header>
@@ -142,7 +142,7 @@ export function GemmaPanel() {
             {messages.length > 0 ? (
               messages.map((message) => (
                 <article className={`message message-${message.role}`} key={message.id}>
-                  {message.role === "gemma" ? (
+                  {message.role === "command" ? (
                     <MarkdownRender text={showThinking ? message.text : hideThinkingSections(message.text)} />
                   ) : (
                     <p>{message.text}</p>
@@ -151,14 +151,14 @@ export function GemmaPanel() {
                 </article>
               ))
             ) : (
-              <article className="message message-gemma">
-                <MarkdownRender text="Gemma is ready for local evidence. Ask a question, upload artifacts, or generate a canvas surface." />
+              <article className="message message-command">
+                <MarkdownRender text="Command is ready for local evidence. Ask a question, upload artifacts, or generate a canvas surface." />
               </article>
             )}
             {queuedWorkspaceItems.length > 0 ? (
               <section className="workspace-queue" aria-label="Queued workspace context">
                 <header>
-                  <strong>Queued for Gemma</strong>
+                  <strong>Queued for Command</strong>
                   <small>{queuedWorkspaceItems.length} item{queuedWorkspaceItems.length === 1 ? "" : "s"} waiting for your prompt</small>
                 </header>
                 <div className="workspace-queue-list">
@@ -169,7 +169,7 @@ export function GemmaPanel() {
                         <strong>{queueKindLabel(item)}</strong>
                         <small>{item.label}</small>
                       </span>
-                      <button type="button" aria-label={`Remove ${item.label} from Gemma queue`} onClick={() => removeQueuedWorkspaceItem(item.id)}>
+                      <button type="button" aria-label={`Remove ${item.label} from Command queue`} onClick={() => removeQueuedWorkspaceItem(item.id)}>
                         <X size={12} />
                       </button>
                     </article>
@@ -177,7 +177,7 @@ export function GemmaPanel() {
                 </div>
               </section>
             ) : null}
-            {gemmaWorkspaceMode ? (
+            {commandWorkspaceMode ? (
               <section className="agent-workspace-render" aria-label="Agent workspace rendered components">
                 <header>
                   <strong>Workspace products</strong>
@@ -211,15 +211,15 @@ export function GemmaPanel() {
                       <Layers size={16} />
                       <span>
                         <strong>No generated surfaces yet</strong>
-                        <small>Ask Gemma to build a workspace item and it will render here as an operator-facing preview.</small>
+                        <small>Ask Command to build a workspace item and it will render here as an operator-facing preview.</small>
                       </span>
                     </article>
                   )}
                 </div>
               </section>
             ) : null}
-            {gemmaBusy ? (
-              <article className="message message-gemma thinking">
+            {commandBusy ? (
+              <article className="message message-command thinking">
                 <p>Hydrating selected context and running local analysis...</p>
                 <button type="button" onClick={cancelInference}>Cancel</button>
               </article>
@@ -227,7 +227,7 @@ export function GemmaPanel() {
             <div ref={endRef} />
           </div>
 
-          <div className="gemma-cards">
+          <div className="command-cards">
             <button
               type="button"
               onClick={() => {
@@ -257,7 +257,7 @@ export function GemmaPanel() {
             <button
               type="button"
               onClick={() => {
-                buildGemmaWorkspaceFromQueue();
+                buildCommandWorkspaceFromQueue();
               }}
             >
               <Code2 size={15} />
@@ -269,21 +269,21 @@ export function GemmaPanel() {
             </button>
           </div>
 
-          <form className="gemma-input" onSubmit={onSubmit}>
+          <form className="command-input" onSubmit={onSubmit}>
             <input
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask Gemma anything..."
-              aria-label="Ask Gemma anything"
+              placeholder="Ask Command anything..."
+              aria-label="Ask Command anything"
             />
-            <button type="submit" disabled={gemmaBusy}>
+            <button type="submit" disabled={commandBusy}>
               <Send size={17} />
             </button>
           </form>
         </aside>
       ) : null}
 
-      <button className={`gemma-dock ${gemmaBusy ? "busy" : ""}`} type="button" onClick={toggleGemma} aria-label="Open Gemma">
+      <button className={`command-dock ${commandBusy ? "busy" : ""}`} type="button" onClick={toggleCommand} aria-label="Open Command">
         <Sparkles size={30} />
         <span>{activeAnalysis.length}</span>
       </button>
@@ -317,7 +317,7 @@ function queueIcon(item: WorkspaceQueueItem) {
 
 function workspaceRenderModules(modules: CanvasModule[]) {
   const generated = modules.filter((module) =>
-    /\b(gemma|generated|workspace|render|graph|diagram|decision|communication)\b/i.test(`${module.title} ${module.subtitle} ${module.kind}`),
+    /\b(command|generated|workspace|render|graph|diagram|decision|communication)\b/i.test(`${module.title} ${module.subtitle} ${module.kind}`),
   );
   return (generated.length ? generated : modules).slice(0, 6);
 }

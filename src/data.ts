@@ -69,4 +69,4 @@ export const attachments: Attachment[] = [];
 export const activeAnalysis: AnalysisTask[] = [];
 export const operatorTasks: OperatorTask[] = [];
 export const ledgerEvents: LedgerEvent[] = [];
-export const initialMessages: Array<{ id: string; role: "operator" | "gemma"; text: string; time: string }> = [];
+export const initialMessages: Array<{ id: string; role: "operator" | "command"; text: string; time: string }> = [];
