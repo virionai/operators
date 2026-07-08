@@ -17,6 +17,7 @@ import { buildCapsuleExport, buildProtocolCapsulePackage } from "./lib/capsuleEx
 import { hydrateCapsuleFile, isCapsuleUpload } from "./lib/capsuleHydration";
 import {
   checkRuntimeHealth,
+  providerLabel,
   runGemmaQuestion,
   type FocusedCanvasContext,
   type RuntimeQueueItem,
@@ -244,6 +245,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     enabled: true,
     endpoint: "http://127.0.0.1:11434/api/chat",
     model: "gemma4:latest",
+    provider: "ollama",
+    apiKey: "",
   },
   runtimeHealth: {
     status: "checking",
@@ -665,20 +668,30 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   toggleGemma: () => set((state) => ({ gemmaOpen: !state.gemmaOpen })),
   setGemmaWorkspaceMode: (enabled) => set({ gemmaWorkspaceMode: enabled, gemmaOpen: true, documentOpen: false }),
   updateRuntime: (runtime) =>
-    set((state) => ({
-      runtime: { ...state.runtime, ...runtime },
-      runtimeHealth: {
-        status: runtime.enabled === false ? "disabled" : "checking",
-        detail: runtime.enabled === false ? "Ollama disabled; deterministic local fallback is active." : "Checking local Ollama runtime.",
-        checkedAt: "now",
-      },
-    })),
+    set((state) => {
+      const next = { ...state.runtime, ...runtime };
+      const label = providerLabel(next);
+      return {
+        runtime: next,
+        runtimeHealth: {
+          status: runtime.enabled === false ? "disabled" : "checking",
+          detail:
+            runtime.enabled === false
+              ? `${label} runtime disabled; deterministic local fallback is active.`
+              : `Checking local ${label} runtime.`,
+          checkedAt: "now",
+        },
+      };
+    }),
   checkRuntime: async () => {
     const runtime = get().runtime;
+    const label = providerLabel(runtime);
     set({
       runtimeHealth: {
         status: runtime.enabled ? "checking" : "disabled",
-        detail: runtime.enabled ? "Checking local Ollama runtime." : "Ollama disabled; deterministic local fallback is active.",
+        detail: runtime.enabled
+          ? `Checking local ${label} runtime.`
+          : `${label} runtime disabled; deterministic local fallback is active.`,
         checkedAt: "now",
       },
     });
@@ -687,7 +700,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     if (
       current.enabled === runtime.enabled &&
       current.endpoint === runtime.endpoint &&
-      current.model === runtime.model
+      current.model === runtime.model &&
+      current.provider === runtime.provider &&
+      current.apiKey === runtime.apiKey
     ) {
       set({ runtimeHealth: health });
     }
@@ -854,8 +869,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           runtimeHealth: {
             status: answer.usedLocalModel ? "connected" : "fallback",
             detail: answer.usedLocalModel
-              ? `${current.runtime.model} answered through local Ollama.`
-              : `${answer.errorDetail || "Ollama did not answer."} Deterministic local fallback is active.`,
+              ? `${current.runtime.model} answered through the local ${providerLabel(current.runtime)} runtime.`
+              : `${answer.errorDetail || "The configured runtime did not answer."} Deterministic local fallback is active.`,
             checkedAt: timeLabel(),
           },
           ...artifacts,
@@ -969,6 +984,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
             endpoint: snapshot.runtime.endpoint || state.runtime.endpoint,
             model: normalizeModel(snapshot.runtime.model || state.runtime.model),
             enabled: snapshot.runtime.enabled ?? state.runtime.enabled,
+            provider: snapshot.runtime.provider ?? state.runtime.provider,
+            apiKey: snapshot.runtime.apiKey ?? state.runtime.apiKey,
           }
         : state.runtime,
     })),

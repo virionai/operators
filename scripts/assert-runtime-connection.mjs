@@ -34,8 +34,15 @@ const checks = [
   [
     "Gemma panel shows reconnect affordance for fallback state",
     gemma.includes("runtime-connection-notice") &&
-      gemma.includes("Reconnect Ollama") &&
+      gemma.includes("Reconnect {providerLabel(runtime)}") &&
       gemma.includes("checkRuntime"),
+  ],
+  [
+    "Runtime supports OpenAI-compatible providers with optional API key",
+    runtime.includes("chat/completions") &&
+      runtime.includes("detectProviderFromEndpoint") &&
+      runtime.includes("Authorization") &&
+      runtime.includes("choices"),
   ],
   ["Runtime notice has styling hooks", styles.includes(".runtime-connection-notice") && styles.includes(".runtime-reconnect-button")],
 ];

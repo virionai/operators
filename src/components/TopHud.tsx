@@ -1,5 +1,6 @@
 import { Cpu, Download, Info, KeyRound, Lock, Play, RefreshCw, Settings, ShieldCheck, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { detectProviderFromEndpoint, providerLabel, type RuntimeProvider } from "../lib/localRuntime";
 import { useWorkspaceStore } from "../store";
 
 const sealLabels = {
@@ -11,9 +12,17 @@ const sealLabels = {
   exported: "Package ready",
 };
 
+const RUNTIME_PRESETS: Array<{ label: string; endpoint: string; model: string; provider: RuntimeProvider }> = [
+  { label: "Ollama default", endpoint: "http://127.0.0.1:11434/api/chat", model: "gemma4:latest", provider: "ollama" },
+  { label: "LM Studio", endpoint: "http://127.0.0.1:1234/v1", model: "local-model", provider: "openai" },
+  { label: "llama.cpp", endpoint: "http://127.0.0.1:8080/v1", model: "local-model", provider: "openai" },
+  { label: "vLLM", endpoint: "http://127.0.0.1:8000/v1", model: "local-model", provider: "openai" },
+];
+
 const DEFAULT_ENVIRONMENT_TOOLS = [
-  "Local runtime tools available to Gemma:",
-  "- Ollama endpoint: http://127.0.0.1:11434/api/chat",
+  "Local runtime tools available to the assistant:",
+  "- Default runtime: Ollama at http://127.0.0.1:11434/api/chat",
+  "- Alternate runtimes: any OpenAI-compatible endpoint (LM Studio, llama.cpp, vLLM, hosted APIs) via Configure",
   "- Model target: gemma4:latest",
   "- Workspace item schemas: markdown, mermaid, graph, table, IOC board, host map, evidence viewer, JSON viewer, query surface, React component",
   "- Local artifact staging: browser uploads, text previews, selected snippets, queued workspace items",
@@ -57,6 +66,8 @@ export function TopHud() {
   const [configureOpen, setConfigureOpen] = useState(false);
   const [endpointDraft, setEndpointDraft] = useState(runtime.endpoint);
   const [modelDraft, setModelDraft] = useState(runtime.model);
+  const [providerDraft, setProviderDraft] = useState<RuntimeProvider>(runtime.provider ?? "ollama");
+  const [apiKeyDraft, setApiKeyDraft] = useState(runtime.apiKey ?? "");
   const [operatorOpen, setOperatorOpen] = useState(false);
   const [operatorMode, setOperatorMode] = useState<"init" | "manage">("manage");
   const [operatorDraft, setOperatorDraft] = useState(operatorIdentity.operatorId);
@@ -220,7 +231,7 @@ export function TopHud() {
         <span className="hud-label">Inference Target</span>
         <div className={`inference-compact status-${runtimeHealth.status}`}>
           <span className={`status-dot ${statusTone}`} />
-          <span>Ollama</span>
+          <span>{providerLabel(runtime)}</span>
           <span>→</span>
           <strong>{modelLabel}</strong>
           <button
@@ -230,9 +241,11 @@ export function TopHud() {
             onClick={() => {
               setEndpointDraft(runtime.endpoint);
               setModelDraft(runtime.model);
+              setProviderDraft(runtime.provider ?? detectProviderFromEndpoint(runtime.endpoint));
+              setApiKeyDraft(runtime.apiKey ?? "");
               setConfigureOpen((open) => !open);
             }}
-            title="Configure optional Ollama endpoint"
+            title="Configure the local or OpenAI-compatible model endpoint"
           >
             <Settings size={13} />
           </button>
@@ -247,33 +260,72 @@ export function TopHud() {
             className="runtime-config-popover"
             onSubmit={(event) => {
               event.preventDefault();
-              updateRuntime({ endpoint: endpointDraft.trim(), model: modelDraft.trim(), enabled: true });
+              updateRuntime({
+                endpoint: endpointDraft.trim(),
+                model: modelDraft.trim(),
+                provider: providerDraft,
+                apiKey: apiKeyDraft.trim(),
+                enabled: true,
+              });
               setConfigureOpen(false);
               window.setTimeout(() => void checkRuntime(), 0);
             }}
           >
             <label>
+              Provider
+              <select
+                value={providerDraft}
+                onChange={(event) => setProviderDraft(event.currentTarget.value as RuntimeProvider)}
+              >
+                <option value="ollama">Ollama (native API)</option>
+                <option value="openai">OpenAI-compatible (chat completions)</option>
+              </select>
+            </label>
+            <label>
               Endpoint
-              <input value={endpointDraft} onChange={(event) => setEndpointDraft(event.currentTarget.value)} />
+              <input
+                value={endpointDraft}
+                onChange={(event) => {
+                  setEndpointDraft(event.currentTarget.value);
+                  setProviderDraft(detectProviderFromEndpoint(event.currentTarget.value));
+                }}
+                placeholder={providerDraft === "openai" ? "http://127.0.0.1:1234/v1" : "http://127.0.0.1:11434/api/chat"}
+              />
             </label>
             <label>
               Model
               <input value={modelDraft} onChange={(event) => setModelDraft(event.currentTarget.value)} />
             </label>
+            {providerDraft === "openai" ? (
+              <label>
+                API key (optional)
+                <input
+                  type="password"
+                  value={apiKeyDraft}
+                  onChange={(event) => setApiKeyDraft(event.currentTarget.value)}
+                  placeholder="Only needed for authenticated endpoints; stored in this browser only"
+                  autoComplete="off"
+                />
+              </label>
+            ) : null}
             <div className="runtime-config-meta">
               <span>{runtimeHealth.detail}</span>
               <span>Context {Math.round(tokenUsed / 1000)}K / {Math.round(tokenMax / 1000)}K</span>
             </div>
             <div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEndpointDraft("http://127.0.0.1:11434/api/chat");
-                  setModelDraft("gemma4:latest");
-                }}
-              >
-                Ollama default
-              </button>
+              {RUNTIME_PRESETS.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => {
+                    setEndpointDraft(preset.endpoint);
+                    setModelDraft(preset.model);
+                    setProviderDraft(preset.provider);
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
               <button type="button" onClick={() => { updateRuntime({ enabled: false }); setConfigureOpen(false); }}>
                 Use fallback
               </button>

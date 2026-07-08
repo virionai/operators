@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { providerLabel } from "../lib/localRuntime";
 import { useWorkspaceStore, type CanvasModule, type WorkspaceQueueItem } from "../store";
 import { hideThinkingSections, MarkdownRender } from "./MarkdownRender";
 
@@ -23,6 +24,7 @@ export function GemmaPanel() {
   const gemmaOpen = useWorkspaceStore((state) => state.gemmaOpen);
   const gemmaWorkspaceMode = useWorkspaceStore((state) => state.gemmaWorkspaceMode);
   const gemmaBusy = useWorkspaceStore((state) => state.gemmaBusy);
+  const runtime = useWorkspaceStore((state) => state.runtime);
   const runtimeHealth = useWorkspaceStore((state) => state.runtimeHealth);
   const toggleGemma = useWorkspaceStore((state) => state.toggleGemma);
   const setGemmaWorkspaceMode = useWorkspaceStore((state) => state.setGemmaWorkspaceMode);
@@ -133,7 +135,7 @@ export function GemmaPanel() {
                   disabled={runtimeHealth.status === "checking"}
                 >
                   <RefreshCw size={13} />
-                  Reconnect Ollama
+                  Reconnect {providerLabel(runtime)}
                 </button>
               </section>
             ) : null}

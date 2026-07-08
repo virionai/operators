@@ -335,7 +335,8 @@ p {
   font-size: 10px;
 }
 
-.runtime-config-popover input {
+.runtime-config-popover input,
+.runtime-config-popover select {
   width: 100%;
   min-width: 0;
   height: 30px;
@@ -349,8 +350,14 @@ p {
   font-size: 10px;
 }
 
+.runtime-config-popover select option {
+  color: var(--text);
+  background: rgba(7, 14, 18, 0.98);
+}
+
 .runtime-config-popover div {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 7px;
 }

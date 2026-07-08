@@ -1,6 +1,7 @@
 import { Archive, Eye, FileText, FolderOpen, GitBranch, GripVertical, Maximize2, Package, Plus, Search, Upload, ZoomIn } from "lucide-react";
 import { useRef, useState } from "react";
 import type { Attachment, LedgerEvent } from "../data";
+import { providerLabel } from "../lib/localRuntime";
 import { useWorkspaceStore, type CanvasGridPlacement, type CanvasModule, type CanvasModuleKind, type PayloadPrimitive } from "../store";
 import { MarkdownRender } from "./MarkdownRender";
 
@@ -909,8 +910,8 @@ function RuntimeComponent({ module }: { module: CanvasModule }) {
     <div className="runtime-component">
       <strong>{module.title === "Gemma Workspace" ? "Queued Build Workspace" : "Local Runtime Signals"}</strong>
       <div className="signal-grid">
-        <span>Ollama</span><b>{runtimeHealth.status}</b>
-        <span>Gemma 4</span><b>{runtime.model}</b>
+        <span>{providerLabel(runtime)}</span><b>{runtimeHealth.status}</b>
+        <span>Model</span><b>{runtime.model}</b>
         <span>Storage</span><b>IndexedDB</b>
         <span>Export</span><b>sealed JSON</b>
       </div>
