@@ -259,7 +259,7 @@ async function buildChainEvents(
       kind: event.action === "capsule_sealed" ? "provenance" : "observation",
       action: event.action || "ledger_event",
       target: event.target || investigationId,
-      timestamp: normalizeTimestamp(event.time, createdAt),
+      timestamp: normalizeTimestamp(event.at || event.time, createdAt),
       payload: {
         source: "capsules-run-operators",
         observed_time: event.time,

@@ -4,6 +4,7 @@ import type { Attachment, LedgerEvent } from "../data";
 import { providerLabel } from "../lib/localRuntime";
 import { useWorkspaceStore, type CanvasGridPlacement, type CanvasModule, type CanvasModuleKind, type PayloadPrimitive } from "../store";
 import { MarkdownRender } from "./MarkdownRender";
+import { MermaidDiagram } from "./MermaidDiagram";
 
 const workspaceItems: Array<{ label: string; kind?: CanvasModuleKind; upload?: boolean }> = [
   { label: "Markdown Note", kind: "markdown" },
@@ -715,17 +716,23 @@ function EmptyModule({ text }: { text: string }) {
 }
 
 function MermaidPreview({ code }: { code: string }) {
+  return (
+    <div className="mermaid-preview">
+      <MermaidDiagram code={code} fallback={<MermaidLabelScatter code={code} />} />
+    </div>
+  );
+}
+
+function MermaidLabelScatter({ code }: { code: string }) {
   const labels = labelsFromMermaidCode(code);
 
   return (
-    <div className="mermaid-preview">
-      <div className="mermaid-visual">
-        {labels.map((label, index) => (
-          <span style={{ left: `${8 + index * 21}%`, top: `${index % 2 === 0 ? 28 : 58}%` }} key={`${label}-${index}`}>
-            {label}
-          </span>
-        ))}
-      </div>
+    <div className="mermaid-visual">
+      {labels.map((label, index) => (
+        <span style={{ left: `${8 + index * 21}%`, top: `${index % 2 === 0 ? 28 : 58}%` }} key={`${label}-${index}`}>
+          {label}
+        </span>
+      ))}
     </div>
   );
 }

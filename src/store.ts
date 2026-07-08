@@ -774,11 +774,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }
   },
   toggleTask: (id) =>
-    set((state) => ({
-      tasks: state.tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task)),
-      ledger: appendLedger(state.ledger, taskLedgerLabel(state.tasks.find((task) => task.id === id)?.text ?? "task")),
-      lastSaved: "now",
-    })),
+    set((state) => {
+      const target = state.tasks.find((task) => task.id === id);
+      if (!target) return state;
+      const nowDone = !target.done;
+      return {
+        tasks: state.tasks.map((task) => (task.id === id ? { ...task, done: nowDone } : task)),
+        ledger: appendEvent(
+          state.ledger,
+          nowDone ? "decision_gate_completed" : "decision_gate_reopened",
+          taskLedgerLabel(target.text),
+          state.operatorIdentity.operatorId,
+        ),
+        lastSaved: "now",
+      };
+    }),
   queueDecisionGateForGemma: (id) =>
     set((state) => {
       const task = state.tasks.find((item) => item.id === id);
@@ -803,16 +813,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set((state) => ({
       snippets: [...state.snippets, snippet],
       tokenUsed: Math.min(state.tokenMax, state.tokenUsed + Math.max(160, Math.round(snippet.length * 1.7))),
-      ledger: [
-        ...state.ledger,
-        {
-          id: `event-${205 + state.ledger.length}`,
-          time: timeLabel(),
-          action: "context_added",
-          target: source,
-          actor: state.operatorIdentity.operatorId,
-        },
-      ],
+      ledger: appendEvent(state.ledger, "context_added", source, state.operatorIdentity.operatorId),
       gemmaOpen: true,
       queuedWorkspaceItems: upsertQueueItem(state.queuedWorkspaceItems, queueFromSelection(snippet, source)),
       lastSaved: "now",
@@ -929,6 +930,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const sealEvent: LedgerEvent = {
       id: `event-${205 + state.ledger.length}`,
       time: timeLabel(),
+      at: new Date().toISOString(),
       action: "capsule_sealed",
       target: state.investigationId,
       actor: operatorIdentity.operatorId,
@@ -1014,10 +1016,6 @@ export function snapshotFromState(state: WorkspaceState): PersistedState {
   };
 }
 
-function appendLedger(ledger: LedgerEvent[], target: string): LedgerEvent[] {
-  return appendEvent(ledger, "decision_gate_updated", target);
-}
-
 function createAnalysisTask(
   id: string,
   question: string,
@@ -1079,6 +1077,7 @@ function appendEvent(ledger: LedgerEvent[], action: string, target: string, acto
     {
       id: `event-${205 + ledger.length}`,
       time: timeLabel(),
+      at: new Date().toISOString(),
       action,
       target,
       actor,

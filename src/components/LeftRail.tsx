@@ -63,15 +63,16 @@ export function LeftRail() {
           <div className="incident-header">
             <span>Time</span><span>Event</span><span>Actor</span><span>Target</span>
           </div>
-          {ledger.slice(-1).map((item) => (
+          {ledger.slice(-6).reverse().map((item) => (
             <button
               className="incident-row"
               key={item.id}
               type="button"
+              title={item.at ? `Recorded ${item.at}` : undefined}
               onClick={() => {
                 setTab("Events");
                 setGraphMode("Event Timeline");
-                addContextSnippet(`${item.time} ${item.action} ${item.actor} target:${item.target}`, "event-log");
+                addContextSnippet(`${item.at || item.time} ${item.action} ${item.actor} target:${item.target}`, "event-log");
               }}
             >
               <span>{item.time}</span>
@@ -109,11 +110,20 @@ export function LeftRail() {
         </div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
-            <div className="task-row" key={task.id}>
+            <div className={`task-row ${task.done ? "task-done" : ""}`} key={task.id}>
               <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} aria-label={`Complete ${task.text}`} />
-              <button type="button" className="task-context-button" onClick={() => queueDecisionGateForGemma(task.id)}>
+              <button
+                type="button"
+                className="task-context-button"
+                title={task.evidence ? `Evidence: ${task.evidence}` : "No evidence linked"}
+                onClick={() => queueDecisionGateForGemma(task.id)}
+              >
                 {task.text}
-                {task.source === "gemma4" ? <small>(meta: gemma4)</small> : null}
+                <span className="task-meta-line">
+                  <em className={`gate-severity severity-${task.severity}`}>{task.severity}</em>
+                  <small>{task.evidence || "no evidence linked"}</small>
+                  {task.source === "gemma4" ? <small>(meta: gemma4)</small> : null}
+                </span>
               </button>
               <button type="button" className="task-queue-button" aria-label={`Queue ${task.text} for Gemma`} onClick={() => queueDecisionGateForGemma(task.id)}>
                 <FileText size={14} />

@@ -41,7 +41,9 @@ Configure includes one-click presets for Ollama (`:11434`), LM Studio (`:1234/v1
 - Gemma concern artifacts render as operator-facing previews. If the queued workspace request is a graph/topology surface, the concern is created as a graph module instead of a markdown note.
 - Start Here preloads the local runtime environment and available Capsule/Gemma tools so the operator can edit from a useful baseline.
 - Environment declaration generates the initial Capsule payload primitives: manifest, payload directory, event chain, and provenance envelope.
-- Gemma responses can populate Decision Gates through a `decision_gates` JSON schema; parsed gates render in the left rail with evidence, severity, and `(meta: gemma4)` attribution.
+- Model responses can populate Decision Gates through a `decision_gates` JSON schema; parsed gates render in the left rail with a severity chip, linked evidence, and `(meta: gemma4)` attribution. Completing or reopening a gate appends an operator-attributed ledger event (`decision_gate_completed` / `decision_gate_reopened`).
+- Mermaid output renders as real diagrams on graph/mermaid canvas modules and inside markdown notes (strict security level, lazy-loaded renderer, source-view fallback on invalid syntax).
+- Every ledger event records a machine-readable ISO-8601 timestamp alongside the display time, and sealed capsule chains preserve the real per-event times for audit review.
 - Task toggles, tiny expandable active analysis footer, and runtime context utilization line.
 - A seal/export flow that assembles a local `.capsule.json` workspace continuity artifact and hashes it locally.
 

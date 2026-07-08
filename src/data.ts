@@ -57,6 +57,7 @@ export type OperatorTask = {
 export type LedgerEvent = {
   id: string;
   time: string;
+  at?: string;
   action: string;
   target: string;
   actor: string;

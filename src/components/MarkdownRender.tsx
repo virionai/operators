@@ -1,4 +1,5 @@
 import { Fragment, ReactNode } from "react";
+import { MermaidDiagram } from "./MermaidDiagram";
 
 type MarkdownRenderProps = {
   text: string;
@@ -150,14 +151,26 @@ function renderBlock(block: Block, index: number) {
   }
 
   if (block.kind === "code") {
-    const label = normalizeLanguage(block.language) === "mermaid" ? "Mermaid" : block.language.trim();
+    const isMermaid = normalizeLanguage(block.language) === "mermaid";
+    const label = isMermaid ? "Mermaid" : block.language.trim();
 
     return (
       <div key={index} style={markdownStyles.codeShell}>
         {label ? <small style={markdownStyles.codeLabel}>{label}</small> : null}
-        <pre style={markdownStyles.pre}>
-          <code>{block.code}</code>
-        </pre>
+        {isMermaid ? (
+          <MermaidDiagram
+            code={block.code}
+            fallback={
+              <pre style={markdownStyles.pre}>
+                <code>{block.code}</code>
+              </pre>
+            }
+          />
+        ) : (
+          <pre style={markdownStyles.pre}>
+            <code>{block.code}</code>
+          </pre>
+        )}
       </div>
     );
   }
