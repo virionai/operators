@@ -6,7 +6,7 @@ Operational rules:
 
 - Preserve local-first behavior. Do not add required cloud services to the primary path.
 - Keep `./run-local.sh` as the one-line startup from this folder.
-- Document Ollama/Gemma as optional local runtime support, not a required cloud dependency.
+- Document Ollama/Command as optional local runtime support, not a required cloud dependency. OpenAI-compatible endpoints (LM Studio, llama.cpp, vLLM, hosted APIs) are equally supported through the same Configure control; keep both protocols working when touching `src/lib/localRuntime.ts`.
 - Keep visible protocol claims aligned with `../capsules-protocol/spec`.
 - Do not claim byte-compatible Capsule v0.6 export until the writer integration exists.
 - Use `Context Continuity`, `Investigation Continuity`, or `Ledger Events` for user-facing memory language. Do not present Pith or compression as the primary product.

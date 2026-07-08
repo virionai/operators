@@ -13,9 +13,9 @@
   --rose: #c97b8b;
   --amber: #c9a87b;
   --violet: #a277d8;
-  --gemma-a: #ff7a18;
-  --gemma-b: #f04db4;
-  --gemma-c: #1d8cff;
+  --command-a: #ff7a18;
+  --command-b: #f04db4;
+  --command-c: #1d8cff;
   --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
@@ -335,7 +335,8 @@ p {
   font-size: 10px;
 }
 
-.runtime-config-popover input {
+.runtime-config-popover input,
+.runtime-config-popover select {
   width: 100%;
   min-width: 0;
   height: 30px;
@@ -349,8 +350,14 @@ p {
   font-size: 10px;
 }
 
+.runtime-config-popover select option {
+  color: var(--text);
+  background: rgba(7, 14, 18, 0.98);
+}
+
 .runtime-config-popover div {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 7px;
 }
@@ -572,7 +579,7 @@ p {
 .rail-panel,
 .canvas-panel,
 .document-viewer,
-.gemma-panel {
+.command-panel {
   border: 1px solid rgba(245, 245, 240, 0.1);
   border-radius: 6px;
   background:
@@ -623,7 +630,7 @@ p {
 .panel-heading h2,
 .canvas-heading h2,
 .bottom-queue h2,
-.gemma-panel h2 {
+.command-panel h2 {
   color: var(--text);
   font-family: var(--mono);
   font-size: 14px;
@@ -829,6 +836,101 @@ p {
 .task-row small {
   display: block;
   color: var(--blue);
+}
+
+.task-row.task-done .task-context-button {
+  color: #7c8b8f;
+  text-decoration: line-through;
+}
+
+.task-resolution {
+  display: block;
+  margin-top: 2px;
+  color: #9ec49a;
+  font-size: 9px;
+  text-decoration: none;
+}
+
+.gate-note-form {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.gate-note-form input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(158, 196, 154, 0.35);
+  border-radius: 4px;
+  outline: 0;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.3);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.gate-note-form button {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(123, 167, 201, 0.24);
+  border-radius: 4px;
+  color: #d7e2e4;
+  background: rgba(8, 18, 27, 0.86);
+  font-family: var(--mono);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.gate-note-form button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.task-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  text-decoration: none;
+}
+
+.task-meta-line small {
+  display: inline;
+  overflow: hidden;
+  max-width: 170px;
+  color: #8fa1a6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate-severity {
+  padding: 0 5px;
+  border: 1px solid rgba(245, 245, 240, 0.14);
+  border-radius: 3px;
+  font-size: 8px;
+  font-style: normal;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.gate-severity.severity-low {
+  color: #9ec49a;
+  border-color: rgba(158, 196, 154, 0.4);
+}
+
+.gate-severity.severity-medium {
+  color: #c9a87b;
+  border-color: rgba(201, 168, 123, 0.4);
+}
+
+.gate-severity.severity-high,
+.gate-severity.severity-critical {
+  color: #d98d8d;
+  border-color: rgba(217, 141, 141, 0.44);
 }
 
 .workspace-canvas {
@@ -1250,9 +1352,14 @@ p {
 }
 
 .heatmap-row i {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 18px;
   border: 1px solid rgba(0, 0, 0, 0.3);
+  color: #f3f7f7;
+  font-size: 9px;
+  font-style: normal;
 }
 
 .heatmap-scale {
@@ -1401,7 +1508,7 @@ p {
   color: #ef4d52;
 }
 
-.gemma-panel {
+.command-panel {
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -1411,11 +1518,11 @@ p {
   border-color: transparent;
   background:
     linear-gradient(#071017, #071017) padding-box,
-    linear-gradient(135deg, var(--gemma-a), var(--gemma-b), var(--gemma-c)) border-box;
+    linear-gradient(135deg, var(--command-a), var(--command-b), var(--command-c)) border-box;
   box-shadow: 0 0 34px rgba(240, 77, 180, 0.22), 0 0 48px rgba(29, 140, 255, 0.13);
 }
 
-.gemma-panel header {
+.command-panel header {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) 23px 29px 23px;
   gap: 8px;
@@ -1423,27 +1530,27 @@ p {
   padding: 14px 14px 10px;
 }
 
-.gemma-title-row {
+.command-title-row {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 10px;
 }
 
-.gemma-panel h2 {
+.command-panel h2 {
   overflow: hidden;
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.gemma-panel small {
+.command-panel small {
   color: #98a5a8;
   font-family: var(--mono);
   font-size: 10px;
 }
 
-.gemma-panel header button {
+.command-panel header button {
   display: inline-grid;
   place-items: center;
   width: 23px;
@@ -1460,24 +1567,24 @@ p {
   cursor: pointer;
 }
 
-.gemma-panel header button.window-max {
+.command-panel header button.window-max {
   width: 29px;
   min-width: 29px;
 }
 
-.gemma-panel header button.window-close:hover {
+.command-panel header button.window-close:hover {
   color: #ffdfe5;
   border-color: rgba(201, 123, 139, 0.52);
   background: rgba(201, 123, 139, 0.13);
 }
 
-.gemma-panel header button span {
+.command-panel header button span {
   color: currentColor;
   font-size: 9px;
   text-transform: none;
 }
 
-.gemma-sigil {
+.command-sigil {
   display: grid;
   place-items: center;
   width: 28px;
@@ -1524,7 +1631,7 @@ p {
   background: rgba(16, 70, 126, 0.35);
 }
 
-.message-gemma {
+.message-command {
   justify-self: start;
 }
 
@@ -1828,13 +1935,13 @@ p {
   color: var(--violet);
 }
 
-.gemma-cards {
+.command-cards {
   display: grid;
   gap: 8px;
   padding: 0 14px 12px;
 }
 
-.gemma-cards button {
+.command-cards button {
   display: grid;
   grid-template-columns: 18px 1fr auto;
   align-items: center;
@@ -1848,17 +1955,17 @@ p {
   cursor: pointer;
 }
 
-.gemma-cards span,
-.gemma-cards small {
+.command-cards span,
+.command-cards small {
   display: block;
 }
 
-.gemma-cards span {
+.command-cards span {
   font-family: var(--mono);
   font-size: 10px;
 }
 
-.gemma-cards b {
+.command-cards b {
   padding: 4px 8px;
   border: 1px solid rgba(43, 180, 255, 0.4);
   border-radius: 3px;
@@ -1868,14 +1975,14 @@ p {
   font-weight: 400;
 }
 
-.gemma-input {
+.command-input {
   display: grid;
   grid-template-columns: 1fr 34px;
   gap: 8px;
   padding: 12px 14px 16px;
 }
 
-.gemma-input input {
+.command-input input {
   min-width: 0;
   height: 38px;
   padding: 0 12px;
@@ -1888,7 +1995,7 @@ p {
   font-size: 11px;
 }
 
-.gemma-input button {
+.command-input button {
   display: grid;
   place-items: center;
   border: 1px solid rgba(123, 167, 201, 0.22);
@@ -1898,7 +2005,7 @@ p {
   cursor: pointer;
 }
 
-.gemma-dock {
+.command-dock {
   position: fixed;
   right: 18px;
   bottom: 82px;
@@ -1912,16 +2019,16 @@ p {
   color: var(--text);
   background:
     radial-gradient(circle at 55% 52%, rgba(255, 255, 255, 0.55), transparent 7%),
-    linear-gradient(135deg, var(--gemma-a), var(--gemma-b) 47%, var(--gemma-c));
+    linear-gradient(135deg, var(--command-a), var(--command-b) 47%, var(--command-c));
   box-shadow: 0 0 34px rgba(240, 77, 180, 0.4), 0 0 40px rgba(29, 140, 255, 0.22);
   cursor: pointer;
 }
 
-.gemma-dock.busy {
+.command-dock.busy {
   animation: dockPulse 1.4s ease-in-out infinite;
 }
 
-.gemma-dock span {
+.command-dock span {
   position: absolute;
   top: -4px;
   right: 2px;
@@ -2381,11 +2488,11 @@ p {
     max-height: 300px;
   }
 
-  .gemma-panel {
+  .command-panel {
     min-height: 620px;
   }
 
-  .gemma-dock {
+  .command-dock {
     right: 14px;
     bottom: 14px;
   }
@@ -2406,7 +2513,7 @@ p {
   .bottom-queue,
   .left-rail,
   .workspace-canvas,
-  .gemma-panel {
+  .command-panel {
     width: 100%;
     max-width: 100vw;
   }
@@ -2437,7 +2544,7 @@ p {
     display: none;
   }
 
-  .gemma-dock {
+  .command-dock {
     width: 58px;
     height: 58px;
   }
@@ -2449,7 +2556,7 @@ p {
   }
 }
 
-/* Review pass: compact HUD, overlay Gemma, movable canvas, and tiny footer queue. */
+/* Review pass: compact HUD, overlay Command, movable canvas, and tiny footer queue. */
 .app-shell {
   grid-template-rows: 84px 40px minmax(0, 1fr) 38px;
 }
@@ -3056,7 +3163,7 @@ p {
   line-height: 1.45;
 }
 
-.gemma-panel {
+.command-panel {
   position: absolute;
   top: 8px;
   right: 12px;
@@ -3066,7 +3173,7 @@ p {
   min-height: 0;
 }
 
-.gemma-dock {
+.command-dock {
   right: 18px;
   bottom: 50px;
 }
@@ -3414,7 +3521,7 @@ p {
   min-height: calc(100% - 58px);
 }
 
-.canvas-panel.gemma-active {
+.canvas-panel.command-active {
   border-color: rgba(240, 77, 180, 0.48);
   box-shadow:
     0 0 0 1px rgba(240, 77, 180, 0.14),
@@ -3494,7 +3601,7 @@ p {
   background: rgba(0, 0, 0, 0.22);
 }
 
-.gemma-panel header .thinking-toggle {
+.command-panel header .thinking-toggle {
   display: inline-flex;
   flex: 0 0 auto;
   width: auto;
@@ -4097,6 +4204,160 @@ p {
   min-height: 0;
 }
 
+.event-log-workspace {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-height: 100%;
+  padding: 16px;
+  border: 1px solid rgba(123, 167, 201, 0.24);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgba(123, 167, 201, 0.08), rgba(8, 18, 27, 0.42)),
+    rgba(4, 10, 14, 0.72);
+}
+
+.event-log-workspace > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.event-log-workspace > header h3 {
+  margin: 0;
+  color: #f3f7f7;
+  font-family: var(--mono);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.event-log-workspace > header p {
+  margin: 2px 0 0;
+  color: #9aa8ac;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.event-log-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid rgba(245, 245, 240, 0.1);
+  border-radius: 4px;
+  color: #9aa8ac;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.event-log-search input {
+  width: 220px;
+  height: 28px;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.event-log-table {
+  overflow-y: auto;
+  min-height: 0;
+  border: 1px solid rgba(245, 245, 240, 0.07);
+  border-radius: 5px;
+}
+
+.event-log-row {
+  display: grid;
+  grid-template-columns: 64px 168px 1.2fr 0.7fr 1.3fr;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(245, 245, 240, 0.06);
+  color: #c8d2d4;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-log-row.header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #8fa1a6;
+  background: rgba(7, 14, 18, 0.98);
+  cursor: default;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+
+.event-log-row:not(.header):hover {
+  background: rgba(123, 167, 201, 0.08);
+}
+
+.event-log-row strong {
+  color: #e7f0f1;
+  font-weight: 600;
+}
+
+.event-log-row em {
+  overflow: hidden;
+  color: #9db4bd;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-log-iso {
+  color: #8fa1a6;
+}
+
+.event-log-empty {
+  margin: 0;
+  padding: 14px;
+  color: #8fa1a6;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.mermaid-diagram {
+  min-height: 120px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid rgba(123, 167, 201, 0.12);
+  border-radius: 5px;
+  background: rgba(3, 10, 14, 0.4);
+}
+
+.mermaid-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+.mermaid-source-fallback {
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid rgba(201, 123, 123, 0.24);
+  border-radius: 5px;
+  color: #dce7e8;
+  background: rgba(3, 10, 14, 0.4);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .mermaid-visual {
   position: relative;
   min-height: 160px;
@@ -4132,7 +4393,7 @@ p {
   transform: translate(-50%, -50%);
 }
 
-.gemma-panel.gemma-floating {
+.command-panel.command-floating {
   position: fixed;
   right: auto;
   bottom: auto;
@@ -4146,12 +4407,12 @@ p {
   z-index: 35;
 }
 
-.gemma-floating > header {
+.command-floating > header {
   cursor: move;
   touch-action: none;
 }
 
-.gemma-panel.gemma-floating.gemma-workspace-view {
+.command-panel.command-floating.command-workspace-view {
   top: 154px;
   right: 20px;
   bottom: 48px;
@@ -4166,40 +4427,40 @@ p {
   z-index: 38;
 }
 
-.gemma-workspace-view > header {
+.command-workspace-view > header {
   cursor: default;
 }
 
-.gemma-workspace-view .message-stack {
+.command-workspace-view .message-stack {
   grid-template-columns: minmax(300px, 0.72fr) minmax(360px, 1fr);
   align-content: stretch;
 }
 
-.gemma-workspace-view .message-stack > .message,
-.gemma-workspace-view .message-stack > .workspace-queue,
-.gemma-workspace-view .message-stack > .runtime-connection-notice {
+.command-workspace-view .message-stack > .message,
+.command-workspace-view .message-stack > .workspace-queue,
+.command-workspace-view .message-stack > .runtime-connection-notice {
   max-width: 100%;
 }
 
-.gemma-workspace-view .agent-workspace-render {
+.command-workspace-view .agent-workspace-render {
   grid-column: 2;
   grid-row: auto;
   align-self: start;
   overflow: auto;
 }
 
-.gemma-workspace-view .agent-workspace-grid {
+.command-workspace-view .agent-workspace-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-/* Gemma workspace formatting reset */
-.gemma-workspace-view .message-stack {
+/* Command workspace formatting reset */
+.command-workspace-view .message-stack {
   align-content: start;
   align-items: start;
   grid-template-columns: minmax(300px, 0.86fr) minmax(320px, 0.64fr);
 }
 
-.gemma-workspace-view .agent-workspace-render {
+.command-workspace-view .agent-workspace-render {
   grid-column: 2;
   grid-row: auto;
   align-self: start;
@@ -4207,20 +4468,20 @@ p {
   overflow: auto;
 }
 
-.gemma-workspace-view .agent-workspace-grid {
+.command-workspace-view .agent-workspace-grid {
   align-content: start;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.gemma-workspace-view .agent-render-card,
-.gemma-workspace-view .agent-render-empty {
+.command-workspace-view .agent-render-card,
+.command-workspace-view .agent-render-empty {
   min-height: 0;
 }
 
-.gemma-workspace-view .agent-render-card .markdown-render {
+.command-workspace-view .agent-render-card .markdown-render {
   max-height: 240px;
 }
-/* End Gemma workspace formatting reset */
+/* End Command workspace formatting reset */
 
 .task-context-button,
 .task-queue-button {
@@ -4768,7 +5029,7 @@ p {
     width: 100%;
   }
 
-  .gemma-panel {
+  .command-panel {
     position: relative;
     top: auto;
     right: auto;

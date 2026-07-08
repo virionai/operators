@@ -4,7 +4,7 @@ const files = {
   topHud: read("src/components/TopHud.tsx"),
   modeNav: read("src/components/ModeNav.tsx"),
   canvas: read("src/components/WorkspaceCanvas.tsx"),
-  gemma: read("src/components/GemmaPanel.tsx"),
+  command: read("src/components/CommandPanel.tsx"),
   markdown: read("src/components/MarkdownRender.tsx"),
   rail: read("src/components/LeftRail.tsx"),
   runtime: read("src/lib/localRuntime.ts"),
@@ -21,25 +21,25 @@ const checks = [
   ["Navigation removed temporary dynamic workspace plus control", files.modeNav.includes("agent-nav-button") && !files.modeNav.includes("createDynamicWorkspace") && !files.modeNav.includes("workspace-plus")],
   ["Canvas owns workspace item creation", files.canvas.includes("requestCanvasModule") && files.canvas.includes("Workspace Item Schema")],
   [
-    "Gemma actions create real workspace products",
-    files.gemma.includes("createDecisionGateSurface") &&
-      files.gemma.includes("createCommunicationPlanSurface") &&
-      files.gemma.includes("buildGemmaWorkspaceFromQueue") &&
-      !files.gemma.includes("addCanvasModule"),
+    "Command actions create real workspace products",
+    files.command.includes("createDecisionGateSurface") &&
+      files.command.includes("createCommunicationPlanSurface") &&
+      files.command.includes("buildCommandWorkspaceFromQueue") &&
+      !files.command.includes("addCanvasModule"),
   ],
   [
-    "Canvas item creation queues instead of auto-asking Gemma",
+    "Canvas item creation queues instead of auto-asking Command",
     files.store.includes("queuedWorkspaceItems") &&
       requestCanvasModuleBody(files.store).includes("workspace_item_queued") &&
-      !requestCanvasModuleBody(files.store).includes("askGemma"),
+      !requestCanvasModuleBody(files.store).includes("askCommand"),
   ],
-  ["Canvas module focus queues Gemma prompt context", files.canvas.includes("focusCanvasModule") && files.runtime.includes("Queued workspace context")],
-  ["Gemma queue renders chips instead of raw schemas", files.gemma.includes("workspace-queue") && files.gemma.includes("Queued for Gemma")],
-  ["Gemma finding correlation creates rose workspace item", files.store.includes("gemma-finding") && files.store.includes("queue-concern") && files.gemma.includes("tone-${item.tone}")],
-  ["Graph-queued findings render as graph surfaces", files.store.includes("shouldRenderConcernAsGraph") && files.store.includes("titleFromGemmaResponse") && files.store.includes('icon: graphRequested ? "graph"')],
-  ["Gemma prompt includes workspace response contract", files.runtime.includes("WORKSPACE_RESPONSE_CONTRACT") && files.runtime.includes("exactly one fenced Mermaid block")],
-  ["Gemma Mermaid responses hydrate queued graph modules", files.store.includes("extractMermaidCode") && files.store.includes("applyGeneratedCodeToQueuedModules") && files.canvas.includes("if (module.code?.trim()) return <MermaidPreview")],
-  ["Gemma markdown and thinking controls exist", files.gemma.includes("Show thinking") && files.markdown.includes("hideThinkingSections")],
+  ["Canvas module focus queues Command prompt context", files.canvas.includes("focusCanvasModule") && files.runtime.includes("Queued workspace context")],
+  ["Command queue renders chips instead of raw schemas", files.command.includes("workspace-queue") && files.command.includes("Queued for Command")],
+  ["Command finding correlation creates rose workspace item", files.store.includes("command-finding") && files.store.includes("queue-concern") && files.command.includes("tone-${item.tone}")],
+  ["Graph-queued findings render as graph surfaces", files.store.includes("shouldRenderConcernAsGraph") && files.store.includes("titleFromCommandResponse") && files.store.includes('icon: graphRequested ? "graph"')],
+  ["Command prompt includes workspace response contract", files.runtime.includes("WORKSPACE_RESPONSE_CONTRACT") && files.runtime.includes("exactly one fenced Mermaid block")],
+  ["Command Mermaid responses hydrate queued graph modules", files.store.includes("extractMermaidCode") && files.store.includes("applyGeneratedCodeToQueuedModules") && files.canvas.includes("if (module.code?.trim()) return <MermaidPreview")],
+  ["Command markdown and thinking controls exist", files.command.includes("Show thinking") && files.markdown.includes("hideThinkingSections")],
   ["Markdown notes render preview", files.canvas.includes("module-note-preview") && !files.canvas.includes("<textarea")],
   ["Generated concerns are preview-only", files.canvas.includes("module-note-preview-only") && files.store.includes('renderMode: graphRequested ? undefined : "preview"')],
   ["Canvas module controls use traditional window controls", files.canvas.includes("window-min") && files.canvas.includes("window-max") && files.canvas.includes("window-close")],

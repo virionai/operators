@@ -7,12 +7,12 @@ export function BottomQueue() {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <footer className={`bottom-queue ${expanded ? "expanded" : ""}`} aria-label="Gemma active analysis queue">
+    <footer className={`bottom-queue ${expanded ? "expanded" : ""}`} aria-label="Command active analysis queue">
       <section className="analysis-lane">
         <div className="queue-heading">
           <Brain size={18} />
           <div>
-            <h2>Gemma Active Analysis Queue</h2>
+            <h2>Command Active Analysis Queue</h2>
             <small>{activeAnalysis.length} local tasks</small>
           </div>
           <button type="button" onClick={() => setExpanded((value) => !value)} aria-label="Expand active analysis queue">

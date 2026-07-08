@@ -1,9 +1,13 @@
 import type { Attachment } from "../data";
 
+export type RuntimeProvider = "ollama" | "openai";
+
 export type RuntimeSettings = {
   enabled: boolean;
   endpoint: string;
   model: string;
+  provider?: RuntimeProvider;
+  apiKey?: string;
 };
 
 export type RuntimeAnswer = {
@@ -40,7 +44,7 @@ export type RuntimeQueueItem = {
 };
 
 const DEFAULT_OFFLINE_ANSWER =
-  "Offline deterministic analysis: no local model response is available. Upload artifacts or select context, then Gemma can summarize evidence, propose canvas modules, and prepare continuity notes without cloud dependency.";
+  "Offline deterministic analysis: no local model response is available. Upload artifacts or select context, then the assistant can summarize evidence, propose canvas modules, and prepare continuity notes without cloud dependency.";
 
 const WORKSPACE_RESPONSE_CONTRACT = [
   "Response contract:",
@@ -97,16 +101,29 @@ const KNOWLEDGE_GRAPH_RESPONSE_SCHEMA = [
   "Keep facts atomic. Do not duplicate facts already stated in the same response.",
 ].join("\n");
 
-function buildPrompt(
-  question: string,
-  attachments: Attachment[],
-  snippets: string[],
+export function resolveProvider(settings: RuntimeSettings): RuntimeProvider {
+  if (settings.provider === "ollama" || settings.provider === "openai") return settings.provider;
+  return detectProviderFromEndpoint(settings.endpoint);
+}
+
+export function detectProviderFromEndpoint(endpoint: string): RuntimeProvider {
+  const value = endpoint.trim().toLowerCase();
+  if (/\/v1(\/|$)/.test(value) || value.includes("chat/completions")) return "openai";
+  return "ollama";
+}
+
+export function providerLabel(settings: RuntimeSettings): string {
+  return resolveProvider(settings) === "openai" ? "OpenAI-compatible" : "Ollama";
+}
+
+function buildSystemMessage(
   systemPrompt: string,
   queue: RuntimeQueueItem[],
   focusedModule?: FocusedCanvasContext,
 ) {
   return [
-    "You are Gemma 4 running as a local incident-analysis layer inside Capsules.run Operators.",
+    "You are a local analyst model running inside Capsules.run Operators, an evidence-first analyst workspace.",
+    "Adapt to the operator's declared domain: incident response, financial analysis, legal review, supply chain, healthcare, research, or any other analyst discipline the operator describes.",
     "Use concise operational reasoning. Reference evidence by artifact name.",
     "Workspace outputs are proposed, untrusted local workspace updates until the operator accepts or seals them.",
     WORKSPACE_RESPONSE_CONTRACT,
@@ -114,12 +131,25 @@ function buildPrompt(
     KNOWLEDGE_GRAPH_RESPONSE_SCHEMA,
     workspaceOutputHint(queue, focusedModule),
     systemPrompt.trim() ? `Operator system prompt: ${systemPrompt.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildUserMessage(
+  question: string,
+  attachments: Attachment[],
+  snippets: string[],
+  queue: RuntimeQueueItem[],
+  focusedModule?: FocusedCanvasContext,
+) {
+  return [
     focusedModule ? focusedCanvasContext(focusedModule) : "Focused canvas module: none",
     queuedContext(queue),
     "",
     `Question: ${question}`,
     "",
-    `Artifacts: ${attachments.map((item) => `${item.name} (${item.status})`).join(", ")}`,
+    `Artifacts: ${attachments.map((item) => `${item.name} (${item.status})`).join(", ") || "none"}`,
     snippets.length ? `Selected context: ${snippets.join("\n---\n")}` : "Selected context: none",
   ].join("\n");
 }
@@ -151,7 +181,47 @@ function workspaceOutputHint(queue: RuntimeQueueItem[], focusedModule?: FocusedC
   ].join("\n");
 }
 
-export async function runGemmaQuestion(
+function chatEndpoint(settings: RuntimeSettings) {
+  const endpoint = settings.endpoint.trim().replace(/\/+$/, "");
+  if (resolveProvider(settings) === "openai" && !/\/chat\/completions$/.test(endpoint)) {
+    return `${endpoint}/chat/completions`;
+  }
+  return endpoint;
+}
+
+function modelsEndpoint(settings: RuntimeSettings) {
+  const endpoint = settings.endpoint.trim().replace(/\/+$/, "");
+  if (resolveProvider(settings) === "openai") {
+    return `${endpoint.replace(/\/chat\/completions$/, "")}/models`;
+  }
+  return endpoint.replace(/\/api\/chat$/, "/api/tags");
+}
+
+function runtimeHeaders(settings: RuntimeSettings) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const key = settings.apiKey?.trim();
+  if (key && resolveProvider(settings) === "openai") headers.Authorization = `Bearer ${key}`;
+  return headers;
+}
+
+type ChatResponse = {
+  message?: { content?: string };
+  response?: string;
+  choices?: Array<{ message?: { content?: string }; text?: string }>;
+  error?: { message?: string } | string;
+};
+
+function extractAnswerText(json: ChatResponse) {
+  return (
+    json.message?.content ||
+    json.choices?.[0]?.message?.content ||
+    json.choices?.[0]?.text ||
+    json.response ||
+    ""
+  );
+}
+
+export async function runCommandQuestion(
   question: string,
   settings: RuntimeSettings,
   attachments: Attachment[],
@@ -161,43 +231,42 @@ export async function runGemmaQuestion(
   focusedModule: FocusedCanvasContext | undefined,
   signal: AbortSignal,
 ): Promise<RuntimeAnswer> {
+  const label = providerLabel(settings);
   if (!settings.enabled || !settings.endpoint.trim()) {
     await wait(620, signal);
     return {
       text: synthesizeOfflineAnswer(question, snippets, queue, focusedModule),
       usedLocalModel: false,
-      errorDetail: "Ollama disabled by operator.",
+      errorDetail: `${label} runtime disabled by operator.`,
     };
   }
 
   try {
-    const response = await fetch(settings.endpoint, {
+    const response = await fetch(chatEndpoint(settings), {
       method: "POST",
       signal,
-      headers: { "Content-Type": "application/json" },
+      headers: runtimeHeaders(settings),
       body: JSON.stringify({
-        model: settings.model || "gemma4:latest",
+        model: settings.model || defaultModel(settings),
         stream: false,
         messages: [
-          {
-            role: "user",
-            content: buildPrompt(question, attachments, snippets, systemPrompt, queue, focusedModule),
-          },
+          { role: "system", content: buildSystemMessage(systemPrompt, queue, focusedModule) },
+          { role: "user", content: buildUserMessage(question, attachments, snippets, queue, focusedModule) },
         ],
       }),
     });
 
     if (!response.ok) {
       const body = await response.text().catch(() => "");
-      throw new Error(`Ollama returned ${response.status}${body ? `: ${body.slice(0, 220)}` : ""}`);
+      throw new Error(`${label} runtime returned ${response.status}${body ? `: ${body.slice(0, 220)}` : ""}`);
     }
-    const json = (await response.json()) as { message?: { content?: string }; response?: string };
-    const text = json.message?.content || json.response || DEFAULT_OFFLINE_ANSWER;
+    const json = (await response.json()) as ChatResponse;
+    const text = extractAnswerText(json) || DEFAULT_OFFLINE_ANSWER;
     return { text, usedLocalModel: true };
   } catch (error) {
     if (signal.aborted) throw error;
     await wait(360, signal);
-    const errorDetail = runtimeErrorDetail(error);
+    const errorDetail = runtimeErrorDetail(error, settings);
     return {
       text: `${synthesizeOfflineAnswer(question, snippets, queue, focusedModule)}\n\nRuntime note: ${errorDetail}.`,
       usedLocalModel: false,
@@ -207,8 +276,9 @@ export async function runGemmaQuestion(
 }
 
 export async function checkRuntimeHealth(settings: RuntimeSettings, signal?: AbortSignal): Promise<RuntimeHealth> {
+  const label = providerLabel(settings);
   if (!settings.enabled || !settings.endpoint.trim()) {
-    return health("disabled", "Ollama disabled; deterministic local fallback is active.");
+    return health("disabled", `${label} runtime disabled; deterministic local fallback is active.`);
   }
 
   const controller = new AbortController();
@@ -217,22 +287,43 @@ export async function checkRuntimeHealth(settings: RuntimeSettings, signal?: Abo
   signal?.addEventListener("abort", abort, { once: true });
 
   try {
-    const response = await fetch(tagsEndpoint(settings.endpoint), { signal: controller.signal });
-    if (!response.ok) throw new Error(`Ollama returned ${response.status}`);
-    const json = (await response.json()) as { models?: Array<{ name?: string }> };
-    const models = json.models?.map((model) => model.name).filter(Boolean) ?? [];
-    const model = settings.model || "gemma4:latest";
-    const modelAvailable = models.includes(model) || models.some((name) => name?.startsWith(model.split(":")[0]));
+    const response = await fetch(modelsEndpoint(settings), {
+      signal: controller.signal,
+      headers:
+        settings.apiKey?.trim() && resolveProvider(settings) === "openai"
+          ? { Authorization: `Bearer ${settings.apiKey.trim()}` }
+          : undefined,
+    });
+    if (!response.ok) throw new Error(`${label} runtime returned ${response.status}`);
+    const json = (await response.json()) as {
+      models?: Array<{ name?: string }>;
+      data?: Array<{ id?: string }>;
+    };
+    const models = [
+      ...(json.models?.map((model) => model.name) ?? []),
+      ...(json.data?.map((model) => model.id) ?? []),
+    ].filter((name): name is string => Boolean(name));
+    const model = settings.model || defaultModel(settings);
+    // Some OpenAI-compatible servers do not enumerate models; an empty list is
+    // only acceptable there. An empty Ollama tags list means no model is pulled.
+    const modelAvailable =
+      (resolveProvider(settings) === "openai" && models.length === 0) ||
+      models.includes(model) ||
+      models.some((name) => name.startsWith(model.split(":")[0]));
     return modelAvailable
-      ? health("connected", `${model} available through local Ollama.`)
-      : health("fallback", `Ollama reachable, but ${model} was not listed locally.`);
+      ? health("connected", `${model} available through the local ${label} runtime.`)
+      : health("fallback", `${label} runtime reachable, but ${model} was not listed locally.`);
   } catch (error) {
     if (signal?.aborted) throw error;
-    return health("fallback", `${runtimeErrorDetail(error)}. Deterministic local fallback is active.`);
+    return health("fallback", `${runtimeErrorDetail(error, settings)}. Deterministic local fallback is active.`);
   } finally {
     window.clearTimeout(timeout);
     signal?.removeEventListener("abort", abort);
   }
+}
+
+function defaultModel(settings: RuntimeSettings) {
+  return resolveProvider(settings) === "openai" ? "local-model" : "gemma4:latest";
 }
 
 function synthesizeOfflineAnswer(
@@ -255,7 +346,7 @@ function synthesizeOfflineAnswer(
   }
 
   if (q.includes("access") || q.includes("vector")) {
-    return `No access path can be inferred from an empty workspace. Add source artifacts, select relevant context, or ask Gemma to create a hypothesis surface from uploaded evidence.${selected}${queued}${focused}`;
+    return `No access path can be inferred from an empty workspace. Add source artifacts, select relevant context, or ask for a hypothesis surface built from uploaded evidence.${selected}${queued}${focused}`;
   }
 
   if (q.includes("seal") || q.includes("capsule")) {
@@ -309,16 +400,14 @@ function wait(ms: number, signal: AbortSignal) {
   });
 }
 
-function tagsEndpoint(endpoint: string) {
-  return endpoint.replace(/\/api\/chat\/?$/, "/api/tags");
-}
-
-function runtimeErrorDetail(error: unknown) {
+function runtimeErrorDetail(error: unknown, settings: RuntimeSettings) {
   const message = error instanceof Error ? error.message : String(error);
   if (/Failed to fetch|NetworkError|Load failed/i.test(message)) {
-    return "Ollama endpoint unreachable; check that Ollama is running and that the browser can reach 127.0.0.1:11434";
+    return resolveProvider(settings) === "openai"
+      ? `OpenAI-compatible endpoint unreachable; check that the server is running and that the browser can reach ${settings.endpoint.trim() || "the configured endpoint"}`
+      : "Ollama endpoint unreachable; check that Ollama is running and that the browser can reach 127.0.0.1:11434";
   }
-  return `Ollama request failed: ${message}`;
+  return `${providerLabel(settings)} request failed: ${message}`;
 }
 
 function health(status: RuntimeHealth["status"], detail: string): RuntimeHealth {

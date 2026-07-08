@@ -3,13 +3,13 @@ import { readFileSync } from "node:fs";
 const store = readFileSync("src/store.ts", "utf8");
 const bottomQueue = readFileSync("src/components/BottomQueue.tsx", "utf8");
 
-const askGemmaStart = sliceBetween(store, "askGemma: async", "try {");
-const askGemmaSuccess = sliceBetween(store, "const answer = await runGemmaQuestion", "} catch");
+const askCommandStart = sliceBetween(store, "askCommand: async", "try {");
+const askCommandSuccess = sliceBetween(store, "const answer = await runCommandQuestion", "} catch");
 
 const checks = [
-  ["Gemma prompts create a dedicated active analysis task", store.includes("createAnalysisTask") && askGemmaStart.includes("activeAnalysis") && askGemmaStart.includes("analysisId")],
-  ["Gemma completion updates the same task instead of first item", store.includes("completeAnalysisTask") && askGemmaSuccess.includes("analysisId") && !askGemmaSuccess.includes("index === 0")],
-  ["Gemma cancellation/failure resolves the active task", store.includes("resolveAnalysisTask") && store.includes("Inference cancelled by operator.")],
+  ["Command prompts create a dedicated active analysis task", store.includes("createAnalysisTask") && askCommandStart.includes("activeAnalysis") && askCommandStart.includes("analysisId")],
+  ["Command completion updates the same task instead of first item", store.includes("completeAnalysisTask") && askCommandSuccess.includes("analysisId") && !askCommandSuccess.includes("index === 0")],
+  ["Command cancellation/failure resolves the active task", store.includes("resolveAnalysisTask") && store.includes("Inference cancelled by operator.")],
   ["Analysis labels are derived from real prompt context", store.includes("analysisLabelForQuestion") && store.includes("analysisSourceForQueue")],
   ["Footer reports idle as an explicit runtime state", bottomQueue.includes("No active local analysis") && bottomQueue.includes("activeAnalysis.length")],
   [

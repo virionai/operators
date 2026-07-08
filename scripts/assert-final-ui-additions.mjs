@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 const store = readFileSync("src/store.ts", "utf8");
 const modeNav = readFileSync("src/components/ModeNav.tsx", "utf8");
-const gemmaPanel = readFileSync("src/components/GemmaPanel.tsx", "utf8");
+const commandPanel = readFileSync("src/components/CommandPanel.tsx", "utf8");
 const topHud = readFileSync("src/components/TopHud.tsx", "utf8");
 const styles = readFileSync("src/styles.css", "utf8");
 const bottomQueue = readFileSync("src/components/BottomQueue.tsx", "utf8");
@@ -12,30 +12,30 @@ const expandedFooterBlock = sliceBetween(styles, ".bottom-queue.expanded {", "}"
 const checks = [
   ["package exposes final UI additions guard", pkg.includes('"test:final-ui"')],
   [
-    "Gemma has workspace mode state",
-    store.includes("gemmaWorkspaceMode: boolean") &&
-      store.includes("setGemmaWorkspaceMode") &&
-      store.includes("gemmaWorkspaceMode: false"),
+    "Command has workspace mode state",
+    store.includes("commandWorkspaceMode: boolean") &&
+      store.includes("setCommandWorkspaceMode") &&
+      store.includes("commandWorkspaceMode: false"),
   ],
   [
     "Navigation exposes Agent without temporary dynamic workspace plus",
     modeNav.includes("agent-nav-button") &&
-      modeNav.includes("setGemmaWorkspaceMode(true)") &&
-      modeNav.includes("setGemmaWorkspaceMode(false)") &&
+      modeNav.includes("setCommandWorkspaceMode(true)") &&
+      modeNav.includes("setCommandWorkspaceMode(false)") &&
       !modeNav.includes("workspace-plus"),
   ],
   [
-    "Gemma panel is resizable and starts compact",
-    gemmaPanel.includes("gemma-workspace-view") &&
+    "Command panel is resizable and starts compact",
+    commandPanel.includes("command-workspace-view") &&
       styles.includes("resize: both") &&
       styles.includes("width: 304px") &&
       styles.includes("height: min(44vh, 520px)"),
   ],
   [
-    "Gemma workspace view renders workspace products in chat",
-    gemmaPanel.includes("agent-workspace-render") &&
-      gemmaPanel.includes("Workspace products") &&
-      gemmaPanel.includes("workspaceRenderPreview"),
+    "Command workspace view renders workspace products in chat",
+    commandPanel.includes("agent-workspace-render") &&
+      commandPanel.includes("Workspace products") &&
+      commandPanel.includes("workspaceRenderPreview"),
   ],
   [
     "Blank operational surface defaults near thirty percent width",

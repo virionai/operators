@@ -1,13 +1,16 @@
 import { Archive, Eye, FileText, FolderOpen, GitBranch, GripVertical, Maximize2, Package, Plus, Search, Upload, ZoomIn } from "lucide-react";
 import { useRef, useState } from "react";
 import type { Attachment, LedgerEvent } from "../data";
+import { providerLabel } from "../lib/localRuntime";
 import { useWorkspaceStore, type CanvasGridPlacement, type CanvasModule, type CanvasModuleKind, type PayloadPrimitive } from "../store";
 import { MarkdownRender } from "./MarkdownRender";
+import { MermaidDiagram } from "./MermaidDiagram";
 
 const workspaceItems: Array<{ label: string; kind?: CanvasModuleKind; upload?: boolean }> = [
   { label: "Markdown Note", kind: "markdown" },
   { label: "Mermaid Diagram", kind: "mermaid" },
   { label: "Timeline", kind: "timeline" },
+  { label: "Evidence Heatmap", kind: "heatmap" },
   { label: "Graph", kind: "graph" },
   { label: "Table", kind: "table" },
   { label: "IOC Board", kind: "ioc-board" },
@@ -41,7 +44,7 @@ export function WorkspaceCanvas() {
   const requestCanvasModule = useWorkspaceStore((state) => state.requestCanvasModule);
   const addUploadedAttachments = useWorkspaceStore((state) => state.addUploadedAttachments);
   const addContextSnippet = useWorkspaceStore((state) => state.addContextSnippet);
-  const askGemma = useWorkspaceStore((state) => state.askGemma);
+  const askCommand = useWorkspaceStore((state) => state.askCommand);
   const sealCapsule = useWorkspaceStore((state) => state.sealCapsule);
   const selectAttachment = useWorkspaceStore((state) => state.selectAttachment);
   const setDocumentOpen = useWorkspaceStore((state) => state.setDocumentOpen);
@@ -57,7 +60,12 @@ export function WorkspaceCanvas() {
   const [expanded, setExpanded] = useState(false);
 
   const selectedAttachment = attachments.find((item) => item.id === selectedAttachmentId) ?? attachments[0];
-  const visibleModules = activeTab === "Knowledge" ? modules.filter(isKnowledgeModule) : activeTab === "Assets" ? [] : modules;
+  const visibleModules =
+    activeTab === "Knowledge"
+      ? modules.filter(isKnowledgeModule)
+      : activeTab === "Assets" || activeTab === "Events"
+        ? []
+        : modules;
 
   return (
     <main
@@ -134,6 +142,13 @@ export function WorkspaceCanvas() {
         {activeTab === "Knowledge" ? (
           <KnowledgeGraphWorkspace facts={knowledgeFacts} onCreateGraph={() => void requestCanvasModule("graph")} />
         ) : null}
+        {activeTab === "Events" ? (
+          <EventLogWorkspace
+            onQueueEvent={(event) =>
+              addContextSnippet(`${event.at || event.time} ${event.action} ${event.actor} target:${event.target}`, "event-log")
+            }
+          />
+        ) : null}
         {activeTab === "Assets" ? (
           <AssetBrowserWorkspace
             attachments={attachments}
@@ -185,11 +200,11 @@ export function WorkspaceCanvas() {
           <button
             type="button"
             onClick={() => {
-              void askGemma(`Inspect the current ${graphMode} workspace and identify the next evidence-linked action.`);
+              void askCommand(`Inspect the current ${graphMode} workspace and identify the next evidence-linked action.`);
               setContextMenu(null);
             }}
           >
-            Ask Gemma
+            Ask Command
           </button>
           <button type="button" onClick={() => { void requestCanvasModule("markdown"); setContextMenu(null); }}>
             Add Evidence Note
@@ -234,7 +249,7 @@ function KnowledgeGraphWorkspace({
       <header>
         <div>
           <h3>Knowledge Graph</h3>
-          <p>{facts.length ? `${facts.length} deduplicated relationship${facts.length === 1 ? "" : "s"} from Gemma facts` : "No graph facts accepted yet"}</p>
+          <p>{facts.length ? `${facts.length} deduplicated relationship${facts.length === 1 ? "" : "s"} from Command facts` : "No graph facts accepted yet"}</p>
         </div>
         <button type="button" onClick={onCreateGraph}><GitBranch size={13} /> Graph schema</button>
       </header>
@@ -263,7 +278,7 @@ function KnowledgeGraphWorkspace({
         <div className="kg-empty-state">
           <GitBranch size={24} />
           <strong>No relationships discovered</strong>
-          <p>Queue evidence or a graph surface, then ask Gemma to publish knowledge facts.</p>
+          <p>Queue evidence or a graph surface, then ask Command to publish knowledge facts.</p>
         </div>
       )}
       <div className="kg-edge-list">
@@ -276,8 +291,69 @@ function KnowledgeGraphWorkspace({
             </button>
           ))
         ) : (
-          <span>Knowledge facts will appear here after Gemma returns the graph schema.</span>
+          <span>Knowledge facts will appear here after Command returns the graph schema.</span>
         )}
+      </div>
+    </section>
+  );
+}
+
+function EventLogWorkspace({ onQueueEvent }: { onQueueEvent: (event: LedgerEvent) => void }) {
+  const ledger = useWorkspaceStore((state) => state.ledger);
+  const [query, setQuery] = useState("");
+  const normalized = query.trim().toLowerCase();
+  const events = [...ledger].reverse();
+  const visible = normalized
+    ? events.filter((event) =>
+        `${event.action.replace(/_/g, " ")} ${event.action} ${event.actor} ${event.target}`.toLowerCase().includes(normalized),
+      )
+    : events;
+  const actorCount = new Set(ledger.map((event) => event.actor)).size;
+
+  return (
+    <section className="event-log-workspace" aria-label="Events workspace ledger">
+      <header>
+        <div>
+          <h3>Event Ledger</h3>
+          <p>
+            {ledger.length} append-only event{ledger.length === 1 ? "" : "s"} · {actorCount} actor{actorCount === 1 ? "" : "s"} · sealed into the capsule chain on export
+          </p>
+        </div>
+        <label className="event-log-search">
+          <Search size={13} />
+          <input
+            type="search"
+            placeholder="Filter by action, actor, or target..."
+            value={query}
+            onChange={(event) => setQuery(event.currentTarget.value)}
+          />
+        </label>
+      </header>
+      <div className="event-log-table" role="table">
+        <div className="event-log-row header" role="row">
+          <span>Time</span><span>Recorded (UTC)</span><span>Action</span><span>Actor</span><span>Target</span>
+        </div>
+        {visible.map((event) => (
+          <button
+            className="event-log-row"
+            type="button"
+            role="row"
+            key={event.id}
+            title="Queue this event as context"
+            onClick={() => onQueueEvent(event)}
+          >
+            <span>{event.time}</span>
+            <span className="event-log-iso">{event.at ? event.at.replace("T", " ").replace(/\.\d+Z$/, "Z") : "—"}</span>
+            <strong>{event.action.replace(/_/g, " ")}</strong>
+            <span>{event.actor}</span>
+            <em>{event.target}</em>
+          </button>
+        ))}
+        {visible.length === 0 ? (
+          <p className="event-log-empty">
+            {ledger.length === 0 ? "No events yet. Workspace actions append to the ledger automatically." : "No events match the filter."}
+          </p>
+        ) : null}
       </div>
     </section>
   );
@@ -385,7 +461,7 @@ function AssetBrowserWorkspace({
               </button>
             ))
           ) : (
-            <p className="asset-browser-empty">Workspace reports and Gemma-generated surfaces will appear here as retrievable payload files.</p>
+            <p className="asset-browser-empty">Workspace reports and Command-generated surfaces will appear here as retrievable payload files.</p>
           )}
         </section>
       </div>
@@ -470,7 +546,7 @@ function Panel({
   return (
     <article
       ref={panelRef}
-      className={`canvas-panel accent-${module.accent} ${active ? "gemma-active" : ""} ${module.docked || module.kind === "command-table" ? "panel-wide" : ""} ${module.kind === "table" ? "table-panel" : ""} ${module.collapsed ? "collapsed" : ""} ${generatedConcern ? "concern-panel" : ""}`}
+      className={`canvas-panel accent-${module.accent} ${active ? "command-active" : ""} ${module.docked || module.kind === "command-table" ? "panel-wide" : ""} ${module.kind === "table" ? "table-panel" : ""} ${module.collapsed ? "collapsed" : ""} ${generatedConcern ? "concern-panel" : ""}`}
       style={{
         left: module.grid?.x,
         top: module.grid?.y,
@@ -550,7 +626,7 @@ function EmptyCanvas({ onAdd, onUpload }: { onAdd: (kind: CanvasModuleKind) => P
     <section className="canvas-empty">
       <div>
         <h3>Blank Operational Surface</h3>
-        <p>Create a surface, upload evidence, or let Gemma generate the first frame from local context.</p>
+        <p>Create a surface, upload evidence, or let Command generate the first frame from local context.</p>
       </div>
       <div className="empty-actions">
         <button type="button" onClick={() => void onAdd("markdown")}><FileText size={14} /> Note</button>
@@ -637,36 +713,55 @@ function Timeline() {
 
 function Heatmap() {
   const ledger = useWorkspaceStore((state) => state.ledger);
-  const attachments = useWorkspaceStore((state) => state.attachments);
-  if (ledger.length === 0 && attachments.length === 0) return <EmptyModule text="No activity matrix has been generated yet." />;
-  const rows = (attachments.length ? attachments.map((item) => item.name) : ["ledger"]).slice(0, 5);
-  const cols = ledger.slice(-5).map((event) => event.action.replace(/_/g, " ").slice(0, 9));
-  const safeCols = cols.length ? cols : ["staged"];
+  if (ledger.length === 0) return <EmptyModule text="No activity matrix yet. Ledger events populate this heatmap as the workspace is used." />;
+
+  const actors = topByCount(ledger.map((event) => event.actor), 4);
+  const actions = topByCount(ledger.map((event) => event.action), 5);
+  const counts = actors.map((actor) =>
+    actions.map((action) => ledger.filter((event) => event.actor === actor && event.action === action).length),
+  );
+  const max = Math.max(1, ...counts.flat());
+  const columns = { gridTemplateColumns: `72px repeat(${actions.length}, 1fr)` };
+
   return (
     <div className="heatmap">
-      <div className="heatmap-row header">
-        <span>Host</span>
-        {safeCols.map((col, index) => <span key={`${col}-${index}`}>{col}</span>)}
+      <div className="heatmap-row header" style={columns}>
+        <span>Actor</span>
+        {actions.map((action) => <span key={action}>{action.replace(/_/g, " ").slice(0, 12)}</span>)}
       </div>
-      {rows.map((row, rowIndex) => (
-        <div className="heatmap-row" key={`${row}-${rowIndex}`}>
-          <span>{row}</span>
-          {safeCols.map((_, colIndex) => {
-            const value = Math.min(92, 20 + (rowIndex + 1) * 9 + (colIndex + 1) * 11);
+      {actors.map((actor, rowIndex) => (
+        <div className="heatmap-row" style={columns} key={actor}>
+          <span>{actor}</span>
+          {actions.map((action, colIndex) => {
+            const count = counts[rowIndex][colIndex];
             return (
-            <i
-              key={`${row}-${rowIndex}-${colIndex}`}
-              style={{
-                background: `linear-gradient(135deg, rgba(88,46,160,.72), rgba(201,168,123,${value / 100}))`,
-              }}
-            />
+              <i
+                key={`${actor}-${action}`}
+                title={`${actor} · ${action.replace(/_/g, " ")} · ${count} event${count === 1 ? "" : "s"}`}
+                style={{
+                  background: count
+                    ? `linear-gradient(135deg, rgba(88,46,160,${0.25 + (count / max) * 0.5}), rgba(201,168,123,${0.15 + (count / max) * 0.75}))`
+                    : "rgba(245, 245, 240, 0.03)",
+                }}
+              >
+                {count || ""}
+              </i>
             );
           })}
         </div>
       ))}
-      <div className="heatmap-scale"><span>Low</span><b /><b /><b /><b /><span>High</span></div>
+      <div className="heatmap-scale"><span>Low</span><b /><b /><b /><b /><span>High · {max} events</span></div>
     </div>
   );
+}
+
+function topByCount(values: string[], limit: number) {
+  const counts = new Map<string, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([value]) => value);
 }
 
 function CommandTable() {
@@ -714,17 +809,23 @@ function EmptyModule({ text }: { text: string }) {
 }
 
 function MermaidPreview({ code }: { code: string }) {
+  return (
+    <div className="mermaid-preview">
+      <MermaidDiagram code={code} fallback={<MermaidLabelScatter code={code} />} />
+    </div>
+  );
+}
+
+function MermaidLabelScatter({ code }: { code: string }) {
   const labels = labelsFromMermaidCode(code);
 
   return (
-    <div className="mermaid-preview">
-      <div className="mermaid-visual">
-        {labels.map((label, index) => (
-          <span style={{ left: `${8 + index * 21}%`, top: `${index % 2 === 0 ? 28 : 58}%` }} key={`${label}-${index}`}>
-            {label}
-          </span>
-        ))}
-      </div>
+    <div className="mermaid-visual">
+      {labels.map((label, index) => (
+        <span style={{ left: `${8 + index * 21}%`, top: `${index % 2 === 0 ? 28 : 58}%` }} key={`${label}-${index}`}>
+          {label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -824,7 +925,7 @@ function graphLabelsFromText(text: string) {
       return "";
     })
     .map((line) => line.replace(/[`*_:[\]()]/g, "").trim())
-    .filter((line) => line.length > 2 && !/source response|gemma concern/i.test(line));
+    .filter((line) => line.length > 2 && !/source response|command concern/i.test(line));
   const unique = [...new Set(candidates)].slice(0, 5);
   return unique.length ? unique : ["Concern", "Evidence", "Risk", "Action", "Capsule"];
 }
@@ -886,16 +987,16 @@ function EvidenceCard({ selectedAttachmentName, kind }: { selectedAttachmentName
 }
 
 function QuerySurface() {
-  const askGemma = useWorkspaceStore((state) => state.askGemma);
+  const askCommand = useWorkspaceStore((state) => state.askCommand);
   return (
     <div className="query-surface">
-      <button type="button" onClick={() => void askGemma("Correlate the current artifacts and list the highest-confidence containment action.")}>
+      <button type="button" onClick={() => void askCommand("Correlate the current artifacts and list the highest-confidence containment action.")}>
         Correlate artifacts
       </button>
-      <button type="button" onClick={() => void askGemma("Extract entities from the selected artifact and map them to the active topology.")}>
+      <button type="button" onClick={() => void askCommand("Extract entities from the selected artifact and map them to the active topology.")}>
         Extract entities
       </button>
-      <button type="button" onClick={() => void askGemma("Generate an evidence-backed incident continuity summary for handoff.")}>
+      <button type="button" onClick={() => void askCommand("Generate an evidence-backed incident continuity summary for handoff.")}>
         Continuity summary
       </button>
     </div>
@@ -907,10 +1008,10 @@ function RuntimeComponent({ module }: { module: CanvasModule }) {
   const runtimeHealth = useWorkspaceStore((state) => state.runtimeHealth);
   return (
     <div className="runtime-component">
-      <strong>{module.title === "Gemma Workspace" ? "Queued Build Workspace" : "Local Runtime Signals"}</strong>
+      <strong>{module.title === "Command Workspace" ? "Queued Build Workspace" : "Local Runtime Signals"}</strong>
       <div className="signal-grid">
-        <span>Ollama</span><b>{runtimeHealth.status}</b>
-        <span>Gemma 4</span><b>{runtime.model}</b>
+        <span>{providerLabel(runtime)}</span><b>{runtimeHealth.status}</b>
+        <span>Model</span><b>{runtime.model}</b>
         <span>Storage</span><b>IndexedDB</b>
         <span>Export</span><b>sealed JSON</b>
       </div>

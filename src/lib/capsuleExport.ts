@@ -138,7 +138,7 @@ export async function buildProtocolCapsulePackage(input: CapsuleExportInput): Pr
     "",
     `- Operator: ${input.operatorIdentity.operatorId}`,
     "- Workspace: Capsules.run Operators",
-    "- Local inference target: Gemma through the configured Ollama endpoint",
+    "- Local inference target: the configured local or OpenAI-compatible model endpoint",
   ].join("\n")));
   files.set("chain/events.jsonl", utf8(eventsJsonl));
   files.set("payload/workspace-state.json", utf8(JSON.stringify({
@@ -259,7 +259,7 @@ async function buildChainEvents(
       kind: event.action === "capsule_sealed" ? "provenance" : "observation",
       action: event.action || "ledger_event",
       target: event.target || investigationId,
-      timestamp: normalizeTimestamp(event.time, createdAt),
+      timestamp: normalizeTimestamp(event.at || event.time, createdAt),
       payload: {
         source: "capsules-run-operators",
         observed_time: event.time,

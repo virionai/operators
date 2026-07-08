@@ -13,7 +13,7 @@ export function LeftRail() {
   const snippets = useWorkspaceStore((state) => state.snippets);
   const selectedAttachmentId = useWorkspaceStore((state) => state.selectedAttachmentId);
   const toggleTask = useWorkspaceStore((state) => state.toggleTask);
-  const queueDecisionGateForGemma = useWorkspaceStore((state) => state.queueDecisionGateForGemma);
+  const queueDecisionGateForCommand = useWorkspaceStore((state) => state.queueDecisionGateForCommand);
   const createDecisionGateSurface = useWorkspaceStore((state) => state.createDecisionGateSurface);
   const setTab = useWorkspaceStore((state) => state.setTab);
   const setGraphMode = useWorkspaceStore((state) => state.setGraphMode);
@@ -23,6 +23,8 @@ export function LeftRail() {
   const selectAttachment = useWorkspaceStore((state) => state.selectAttachment);
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const [expandedAsset, setExpandedAsset] = useState("");
+  const [completingGateId, setCompletingGateId] = useState("");
+  const [decisionNote, setDecisionNote] = useState("");
   const payloadSummary = [
     { label: "Files", value: attachments.length },
     { label: "Surfaces", value: canvasModules.length },
@@ -31,8 +33,8 @@ export function LeftRail() {
   const payloadTotal = payloadSummary.reduce((sum, item) => sum + item.value, 0);
   const payloadFill = Math.min(100, Math.max(8, payloadTotal * 14));
   const contextHelp = attachments.length > 0
-    ? "Local artifacts are staged for inspection. Gemma can use selected context and ledger events without leaving this runtime."
-    : "No evidence loaded. Stage local artifacts or ask Gemma to create the first workspace surface.";
+    ? "Local artifacts are staged for inspection. Command can use selected context and ledger events without leaving this runtime."
+    : "No evidence loaded. Stage local artifacts or ask Command to create the first workspace surface.";
 
   return (
     <aside className="left-rail" aria-label="Investigation assets" tabIndex={0}>
@@ -63,15 +65,16 @@ export function LeftRail() {
           <div className="incident-header">
             <span>Time</span><span>Event</span><span>Actor</span><span>Target</span>
           </div>
-          {ledger.slice(-1).map((item) => (
+          {ledger.slice(-6).reverse().map((item) => (
             <button
               className="incident-row"
               key={item.id}
               type="button"
+              title={item.at ? `Recorded ${item.at}` : undefined}
               onClick={() => {
                 setTab("Events");
                 setGraphMode("Event Timeline");
-                addContextSnippet(`${item.time} ${item.action} ${item.actor} target:${item.target}`, "event-log");
+                addContextSnippet(`${item.at || item.time} ${item.action} ${item.actor} target:${item.target}`, "event-log");
               }}
             >
               <span>{item.time}</span>
@@ -98,7 +101,7 @@ export function LeftRail() {
           <GitBranch size={18} />
           <span>
             <strong>{knowledgeFacts.length ? `${knowledgeFacts.length} relationship${knowledgeFacts.length === 1 ? "" : "s"}` : "No relationships discovered"}</strong>
-            <small>{knowledgeFacts.length ? knowledgeFacts.slice(-2).map((fact) => `${fact.source} ${fact.relation} ${fact.target}`).join(" · ") : "Gemma can update the graph from accepted workspace schemas."}</small>
+            <small>{knowledgeFacts.length ? knowledgeFacts.slice(-2).map((fact) => `${fact.source} ${fact.relation} ${fact.target}`).join(" · ") : "Command can update the graph from accepted workspace schemas."}</small>
           </span>
         </button>
       </section>
@@ -109,15 +112,63 @@ export function LeftRail() {
         </div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
-            <div className="task-row" key={task.id}>
-              <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} aria-label={`Complete ${task.text}`} />
-              <button type="button" className="task-context-button" onClick={() => queueDecisionGateForGemma(task.id)}>
+            <div className={`task-row ${task.done ? "task-done" : ""}`} key={task.id}>
+              <input
+                type="checkbox"
+                checked={task.done}
+                onChange={() => {
+                  if (task.done) {
+                    toggleTask(task.id);
+                    return;
+                  }
+                  setDecisionNote("");
+                  setCompletingGateId(completingGateId === task.id ? "" : task.id);
+                }}
+                aria-label={task.done ? `Reopen ${task.text}` : `Complete ${task.text}`}
+              />
+              <button
+                type="button"
+                className="task-context-button"
+                title={task.evidence ? `Evidence: ${task.evidence}` : "No evidence linked"}
+                onClick={() => queueDecisionGateForCommand(task.id)}
+              >
                 {task.text}
-                {task.source === "gemma4" ? <small>(meta: gemma4)</small> : null}
+                <span className="task-meta-line">
+                  <em className={`gate-severity severity-${task.severity}`}>{task.severity}</em>
+                  <small>{task.evidence || "no evidence linked"}</small>
+                  {task.source === "gemma4" ? <small>(meta: gemma4)</small> : null}
+                </span>
+                {task.done && task.resolution ? (
+                  <span className="task-resolution" title={task.resolvedAt ? `Recorded ${task.resolvedAt}` : undefined}>
+                    decision: {task.resolution}
+                  </span>
+                ) : null}
               </button>
-              <button type="button" className="task-queue-button" aria-label={`Queue ${task.text} for Gemma`} onClick={() => queueDecisionGateForGemma(task.id)}>
+              <button type="button" className="task-queue-button" aria-label={`Queue ${task.text} for Command`} onClick={() => queueDecisionGateForCommand(task.id)}>
                 <FileText size={14} />
               </button>
+              {completingGateId === task.id && !task.done ? (
+                <form
+                  className="gate-note-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!decisionNote.trim()) return;
+                    toggleTask(task.id, decisionNote.trim());
+                    setCompletingGateId("");
+                    setDecisionNote("");
+                  }}
+                >
+                  <input
+                    autoFocus
+                    value={decisionNote}
+                    onChange={(event) => setDecisionNote(event.currentTarget.value)}
+                    placeholder="Reason for decision (recorded to the ledger)"
+                    aria-label={`Reason for completing ${task.text}`}
+                  />
+                  <button type="submit" disabled={!decisionNote.trim()}>Record</button>
+                  <button type="button" onClick={() => { setCompletingGateId(""); setDecisionNote(""); }}>Cancel</button>
+                </form>
+              ) : null}
             </div>
           ))
         ) : (
@@ -237,7 +288,7 @@ export function LeftRail() {
               </button>
             );
           })}
-          {attachments.length === 0 && declaration.declared ? <p className="rail-empty">Uploaded files and Gemma-created reports will appear here as payload assets.</p> : null}
+          {attachments.length === 0 && declaration.declared ? <p className="rail-empty">Uploaded files and Command-created reports will appear here as payload assets.</p> : null}
         </div>
       </section>
     </aside>

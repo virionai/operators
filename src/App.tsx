@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { BottomQueue } from "./components/BottomQueue";
-import { GemmaPanel } from "./components/GemmaPanel";
+import { CommandPanel } from "./components/CommandPanel";
 import { LeftRail } from "./components/LeftRail";
 import { ModeNav } from "./components/ModeNav";
 import { SelectionCapture } from "./components/SelectionCapture";
@@ -43,7 +43,7 @@ export default function App() {
       <div className="workspace-shell">
         <LeftRail />
         <WorkspaceCanvas />
-        <GemmaPanel />
+        <CommandPanel />
       </div>
       <BottomQueue />
       <SelectionCapture />
